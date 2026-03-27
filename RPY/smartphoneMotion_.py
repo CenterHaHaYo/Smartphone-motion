@@ -12,6 +12,7 @@ scene = canvas(title="Smartphone Motion | Attitude sensor(RPW) ",
 scene.camera.pos  = vector(5,5,10)
 scene.camera.axis = vector(-5,-5,-10)
 
+
 phone = box(size=vector(2.8,0.3,1.5), color=color.cyan)
 
 top_marker = box(pos=vector(0,0.2,-0.6),
@@ -119,6 +120,24 @@ def rotate(qw,qx,qy,qz,vx,vy,vz):
 
     return rx,ry,rz
 
+# ── CALIBRATION ───────────────────────
+q0 = None
+
+# ── QUATERNION FUNCTIONS ───────────────
+def quat_conj(w,x,y,z):
+    return (w, -x, -y, -z)
+
+def quat_mul(q1, q2):
+    w1,x1,y1,z1 = q1
+    w2,x2,y2,z2 = q2
+
+    return (
+        w1*w2 - x1*x2 - y1*y2 - z1*z2,
+        w1*x2 + x1*w2 + y1*z2 - z1*y2,
+        w1*y2 - x1*z2 + y1*w2 + z1*x2,
+        w1*z2 + x1*y2 - y1*x2 + z1*w2
+    )
+
 
 # ── FFT BUFFER ─────────────────────────
 buffer_size = 128
@@ -140,7 +159,18 @@ while True:
 
     qw,qx,qy,qz,pitch,roll,yaw = data
 
-    # ── FIX MAPPING ──
+    qx_v = qx
+    qy_v = qz
+    qz_v = -qy 
+
+    if q0 is None:
+        q0 = (qw, qx_v, qy_v, qz_v)
+
+    # ── RELATIVE ROTATION ──
+    q_rel = quat_mul(quat_conj(*q0), (qw, qx_v, qy_v, qz_v))
+    qw, qx, qy, qz = q_rel
+
+    # ──MAPPING ──
     real_roll  = pitch
     real_pitch = yaw
     real_yaw   = roll
@@ -179,16 +209,18 @@ while True:
 
 
     # ── ROTATE OBJECT ──
+
     ax,ay,az = rotate(qw,qx,qy,qz,1,0,0)
     ux,uy,uz = rotate(qw,qx,qy,qz,0,1,0)
 
-    phone.axis = vector(ax,ay,az)
-    phone.up   = vector(ux,uy,uz)
+    # reset orientation
+    phone.axis = vector(ax, ay, az)
+    phone.up   = vector(ux, uy, uz)
 
     mx,my,mz = rotate(qw,qx,qy,qz,0,0.2,-0.6)
-    top_marker.pos  = vector(mx,my,mz)
-    top_marker.axis = vector(ax,ay,az)
-    top_marker.up   = vector(ux,uy,uz)
+    top_marker.pos = vector(mx, my, mz)
+    top_marker.axis = phone.axis
+    top_marker.up   = phone.up
 
     # ── SERVO ──
     pan  = max(-90, min(90, real_yaw))
