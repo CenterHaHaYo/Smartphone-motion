@@ -166,7 +166,7 @@ while True:
         fft_vals = np.fft.fft(data_fft)
         freqs = np.fft.fftfreq(len(data_fft), dt)
 
-        # เอาเฉพาะ positive freq
+        # use only positive freq
         idx = np.where(freqs > 0)
 
         freqs = freqs[idx]
@@ -198,8 +198,8 @@ while True:
     servo2 = (tilt + 45)
 
     # ── LABEL ──
-    pan_lbl.text  = f"Pan (Yaw): {pan:+.1f}°"
-    tilt_lbl.text = f"Tilt (Pitch): {tilt:+.1f}°"
+    pan_lbl.text  = f"Pan (Yaw): {pan:+.1f}° → Servo1 = {servo1:.0f}°"
+    tilt_lbl.text = f"Tilt (Pitch): {tilt:+.1f}°  → Servo2 = {servo2:.0f}°"
     roll_lbl.text = f"Roll: {real_roll:+.1f}°"
     info_lbl.text = f"Pitch:{real_pitch:.1f}  Roll:{real_roll:.1f}  Yaw:{real_yaw:.1f}"
     raw_lbl.text = f"RAW ==> Pitch:{pitch:.1f}  Roll:{roll:.1f}  Yaw:{yaw:.1f}"
