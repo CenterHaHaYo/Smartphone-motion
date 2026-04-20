@@ -25,13 +25,15 @@ top_marker = box(pos=vector(0, 0.2, -0.6),
 axis_len   = 2
 axis_thick = 0.02
 
+
+
 label(pos=vector(0,0,0), text="O", box=False, height=12, color=color.black)
-arrow(pos=vector(0,0,0), axis=vector(-1.2,-2,0),  color=color.orange, shaftwidth=axis_thick)
-label(pos=vector(-1.5,-2.4,0), text="X", box=False, height=14, color=color.orange)
-arrow(pos=vector(0,0,0), axis=vector(axis_len,0,0), color=color.green, shaftwidth=axis_thick)
-label(pos=vector(axis_len+0.2,0,0), text="Y", box=False, height=14, color=color.green)
-arrow(pos=vector(0,0,0), axis=vector(0,axis_len,0), color=color.blue, shaftwidth=axis_thick)
-label(pos=vector(0,axis_len+0.3,0), text="Z", box=False, height=14, color=color.blue)
+arrow(pos=vector(0,0,0), axis=vector(axis_len,0,0),color=color.orange,shaftwidth=axis_thick)
+label(pos=vector(axis_len+0.2,0,0), text="X (Roll axis)",box=False, height=12, color=color.orange)
+arrow(pos=vector(0,0,0), axis=vector(0,axis_len,0),color=color.green, shaftwidth=axis_thick)
+label(pos=vector(0,axis_len+0.3,0), text="Y (Pitch axis)",box=False, height=12, color=color.green)
+arrow(pos=vector(0,0,0), axis=vector(0,0,axis_len),color=color.blue,  shaftwidth=axis_thick)
+label(pos=vector(0,0,axis_len+0.3), text="Z",box=False, height=14, color=color.blue)
 
 # ──────────────────────────────────────────────
 #  COMPARISON GRAPH  (Raw vs Kalman)
@@ -67,15 +69,14 @@ gc_yaw_kalman = gcurve(graph=graph_yaw, color=color.magenta, label="Kalman Yaw")
 #  LABELS
 # ──────────────────────────────────────────────
 info_lbl = label(pos=vector(0, 6,   0), text="Waiting...", box=False)
-pan_lbl  = label(pos=vector(0, 5,   0), text="", box=False, color=color.blue)
-tilt_lbl = label(pos=vector(0, 4.5, 0), text="", box=False, color=color.green)
+yaw_lbl  = label(pos=vector(0, 5,   0), text="", box=False, color=color.blue)
+pitch_lbl = label(pos=vector(0, 4.5, 0), text="", box=False, color=color.green)
 roll_lbl = label(pos=vector(0, 4,   0), text="", box=False, color=color.orange)
 raw_lbl  = label(pos=vector(0, 5.5, 0), text="RAW: --", box=False,
                  color=color.gray(0.3), height=11)
 fft_lbl  = label(pos=vector(-5, 1,  0), text="FFT: --", box=False,
                  color=color.black,   height=12)
-filter_lbl = label(pos=vector(-5, 0, 0), text="Filter: Kalman ON",
-                   box=False, color=color.blue, height=12)
+
 
 # ──────────────────────────────────────────────
 #  KALMAN FILTER CLASS
@@ -294,10 +295,8 @@ while True:
     tilt = max(-45, min(45,  k_pitch))
 
     # ── HUD labels ──
-    pan_lbl.text   = f"Pan (Yaw):   {pan:+.1f}°  → Servo1 = {pan+90:.0f}°"
-    tilt_lbl.text  = f"Tilt (Pitch):{tilt:+.1f}°  → Servo2 = {tilt+45:.0f}°"
-    roll_lbl.text  = f"Roll:         {k_roll:+.1f}°"
-    info_lbl.text  = (f"Kalman  Pitch:{k_pitch:.1f}  "
-                      f"Roll:{k_roll:.1f}  Yaw:{k_yaw:.1f}")
-    raw_lbl.text   = (f"RAW ==>  Pitch:{raw_pitch:.1f}  "
-                      f"Roll:{raw_roll:.1f}  Yaw:{raw_yaw:.1f}")
+    roll_lbl.text  = f"Roll: {k_roll:+.1f}°"
+    pitch_lbl.text  = f"Pitch : {tilt:+.1f}°  → Servo2 (Tilt) = {tilt+45:.0f}°"
+    yaw_lbl.text   = f"Yaw :  {pan:+.1f}°  → Servo1 (Pan) = {pan+90:.0f}°"
+    info_lbl.text  = (f"Kalman  Pitch:{k_pitch:.1f}" f"Roll:{k_roll:.1f}  Yaw:{k_yaw:.1f}")
+    raw_lbl.text   = (f"RAW ==>  Pitch:{raw_pitch:.1f}" f"Roll:{raw_roll:.1f}  Yaw:{raw_yaw:.1f}")
