@@ -4,11 +4,13 @@ import numpy as np
 
 URL = "http://172.20.10.1"
 
+
+
 # ──────────────────────────────────────────────
 #  SCENE SETUP
 # ──────────────────────────────────────────────
 scene = canvas(
-    title="Smartphone Motion | Digital Twin + Kalman Filter",
+    title="Smartphone Motion",
     width=900, height=500,
     background=color.white
 )

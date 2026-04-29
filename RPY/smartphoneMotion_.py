@@ -15,9 +15,7 @@ scene.camera.axis = vector(-5,-5,-10)
 
 phone = box(size=vector(2.8,0.3,1.5), color=color.cyan)
 
-top_marker = box(pos=vector(0,0.2,-0.6),
-                 size=vector(0.4,0.15,0.3),
-                 color=color.red)
+
 
 axis_len = 2
 axis_thick = 0.02
@@ -147,7 +145,6 @@ yaw_buffer   = []
 dt = 1/30
 
 
-
 # ── MAIN LOOP ─────────────────────────
 while True:
   
@@ -218,9 +215,9 @@ while True:
     phone.up   = vector(ux, uy, uz)
 
     mx,my,mz = rotate(qw,qx,qy,qz,0,0.2,-0.6)
-    top_marker.pos = vector(mx, my, mz)
-    top_marker.axis = phone.axis
-    top_marker.up   = phone.up
+    # top_marker.pos = vector(mx, my, mz)
+    # top_marker.axis = phone.axis
+    # top_marker.up   = phone.up
 
     # ── SERVO ──
     pan  = max(-90, min(90, real_yaw))
