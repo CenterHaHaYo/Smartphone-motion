@@ -308,8 +308,3 @@ each one is a good first contribution.
 - [ ] Replay mode: feed a recorded CSV back through the visualizer
 
 ---
-
-## License
-
-No license file is present in this repository yet, so all rights are reserved by
-default. If you intend others to reuse the code, add a `LICENSE` file.
