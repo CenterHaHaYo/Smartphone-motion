@@ -67,17 +67,6 @@ Every script has a `URL` constant near the top. **This is the one line you must 
 URL = "http://192.168.1.43:8080"   # ← replace with the address Phyphox shows
 ```
 
-The scripts currently ship with two different defaults, depending on how each one was
-last used, so make sure you edit the file you are actually going to run:
-
-| Script | Current default `URL` | Typical setup |
-|:--|:--|:--|
-| `RPY/2DOF_motion.py` | `http://172.20.10.1` | iPhone personal hotspot (port 80) |
-| `RPY/FFT/smartphone_motionV1.py` | `http://172.20.10.1` | iPhone personal hotspot (port 80) |
-| `RPY/FFT/smartphone_motionV2_fft.py` | `http://192.168.1.43:8080` | shared Wi-Fi LAN (port 8080) |
-| `RPY/Kalman Filter/smMotionV2.py` | `http://192.168.1.43:8080` | shared Wi-Fi LAN (port 8080) |
-| `RPY/Kalman Filter/smartphone_motionV2.py` | `http://172.20.10.1` | iPhone personal hotspot (port 80) |
-
 One other constant is worth knowing about: `SAMPLE_RATE = 30` sets the polling rate in
 Hz, and should roughly match the sensor rate configured in Phyphox. It also defines the
 FFT frequency resolution (see [How it works](#how-it-works)).
