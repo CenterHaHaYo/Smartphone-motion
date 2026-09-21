@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Recorded data (created at runtime by the CSV recording scripts)
+dataset/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
