@@ -17,3 +17,9 @@ dataset/
 .idea/
 .DS_Store
 Thumbs.db
+
+# PlatformIO build cache (compiled binaries, don't belong in git)
+.pio/
+
+# Local Wi-Fi / AP credentials - never commit real secrets
+include/secrets.h

@@ -32,8 +32,8 @@
 #include <ESP32Servo.h>
 
 // ================= Wi-Fi =================
-const char* ssid     = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
+const char* ssid     = "WIFI_SSID";
+const char* password = "WIFI_PASSWORD";
 
 // ================= Smartphone motion URL =================
 const char* motionURL = "http://172.20.10.1/get?pitch&roll&yaw";
