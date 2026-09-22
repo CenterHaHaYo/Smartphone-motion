@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smartphone Motion → Pan-Tilt Platform</title>
+<meta name="description" content="Cyber-physical pan-tilt motion control system: a smartphone's orientation, streamed over Wi-Fi, drives a 2-DOF servo gimbal in real time.">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --panel-2: #14161c;
+    --border: #262b35;
+    --text: #e8e8e8;
+    --muted: #9aa3af;
+    --accent: #7cc4ff;
+    --accent-2: #2f6fed;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+  header.hero {
+    padding: 64px 0 48px;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(600px 300px at 15% -10%, rgba(47,111,237,0.25), transparent),
+      radial-gradient(500px 260px at 85% -20%, rgba(124,196,255,0.18), transparent);
+  }
+  .eyebrow {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(124,196,255,0.1);
+    border: 1px solid rgba(124,196,255,0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: clamp(28px, 4vw, 42px); margin: 0 0 14px; line-height: 1.2; }
+  .lede { font-size: 17px; color: var(--muted); max-width: 640px; margin: 0 0 24px; }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    text-decoration: none; border: 1px solid var(--border);
+  }
+  .btn.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+  .btn.ghost { color: var(--text); background: var(--panel); }
+
+  .hero-media {
+    margin-top: 36px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    aspect-ratio: 16 / 8;
+    position: relative;
+    background: var(--panel);
+  }
+  .hero-media img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .hero-media .placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--muted); font-size: 14px; text-align: center; padding: 20px;
+  }
+  .hero-media .placeholder .icon { font-size: 30px; }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  section h2 { font-size: 22px; margin: 0 0 6px; }
+  section .section-sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+
+  /* ---- Architecture diagram ---- */
+  .diagram-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .diagram-card svg { width: 100%; height: auto; display: block; }
+  .diagram-legend { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+  /* ---- Timeline ---- */
+  .timeline { position: relative; margin-left: 10px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
+    background: linear-gradient(var(--accent-2), var(--border));
+  }
+  .t-item { position: relative; padding: 0 0 28px 32px; }
+  .t-item:last-child { padding-bottom: 0; }
+  .t-dot {
+    position: absolute; left: 0; top: 4px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent-2); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent-2);
+  }
+  .t-item.current .t-dot { background: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .t-phase { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .t-title { font-size: 16px; font-weight: 600; margin: 2px 0 6px; }
+  .t-desc { font-size: 14px; color: var(--muted); margin: 0; }
+  .t-item.next .t-title { color: var(--muted); }
+  .t-item.next .t-dot { background: transparent; box-shadow: 0 0 0 2px var(--border); }
+
+  /* ---- Hardware gallery ---- */
+  .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .media-slot {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background: var(--panel); border: 1px solid var(--border);
+    aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+  }
+  .media-slot img, .media-slot video { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .media-slot .placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; color: var(--muted); font-size: 12.5px; text-align: center; padding: 14px;
+  }
+  .media-slot .placeholder .icon { font-size: 22px; }
+  .media-slot .placeholder code {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 6px; font-size: 11px; color: var(--accent);
+  }
+  .video-slot { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+
+  /* ---- Stack / links ---- */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 13px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; color: var(--text);
+  }
+  .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .link-card {
+    display: block; text-decoration: none; color: var(--text);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px;
+  }
+  .link-card .k { font-size: 13px; color: var(--muted); }
+  .link-card .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
+
+  footer { padding: 32px 0 60px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Cyber-Physical Motion Control</span>
+    <h1>Smartphone Motion → Pan-Tilt Platform</h1>
+    <p class="lede">
+      A phone's orientation (roll / pitch / yaw), streamed live over Wi-Fi from
+      <a href="https://phyphox.org/" target="_blank" rel="noopener">Phyphox</a>,
+      drives a 2-DOF pan-tilt servo gimbal in real time — filtered, rate-limited,
+      and now controllable from a self-hosted web dashboard with no home router required.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub Repo</a>
+      <a class="btn ghost" href="https://github.com/CenterHaHaYo/Smartphone-motion/tree/main/on%20ESP32" target="_blank" rel="noopener">Firmware</a>
+      <a class="btn ghost" href="#timeline">Progress Timeline</a>
+    </div>
+
+    <div class="hero-media">
+      <div class="placeholder">
+        <div class="icon">📷</div>
+        <div>ใส่รูป/วิดีโอฮาร์ดแวร์จริงได้ที่ <code>assets/img/hero.jpg</code></div>
+      </div>
+      <img id="hero-img" src="assets/img/hero.jpg" alt="Pan-tilt hardware">
+    </div>
+  </div>
+</header>
+
+<section id="architecture">
+  <div class="wrap">
+    <h2>System Architecture</h2>
+    <p class="section-sub">มือถือเป็นเซนเซอร์ทิศทาง — ESP32-S3 เป็นทั้งตัวควบคุมและ Wi-Fi Access Point ของตัวเอง</p>
+
+    <div class="diagram-card">
+      <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7cc4ff"/>
+          </marker>
+        </defs>
+
+        <!-- Phone -->
+        <rect x="20" y="40" width="200" height="90" rx="12" fill="#1a1d24" stroke="#262b35"/>
+        <text x="120" y="72" fill="#e8e8e8" font-size="14" font-weight="600" text-anchor="middle">📱 Phone</text>
+        <text x="120" y="92" fill="#9aa3af" font-size="11.5" text-anchor="middle">Phyphox — Remote Access</text>
+        <text x="120" y="108" fill="#9aa3af" font-size="11.5" text-anchor="middle">pitch / roll / yaw over HTTP</text>
+
+        <!-- ESP32-S3 -->
+        <rect x="350" y="30" width="220" height="110" rx="12" fill="#1a1d24" stroke="#2f6fed" stroke-width="1.5"/>
+        <text x="460" y="58" fill="#7cc4ff" font-size="14" font-weight="700" text-anchor="middle">🧠 ESP32-S3</text>
+        <text x="460" y="78" fill="#9aa3af" font-size="11.5" text-anchor="middle">Wi-Fi Access Point (own network)</text>
+        <text x="460" y="94" fill="#9aa3af" font-size="11.5" text-anchor="middle">Web Server + Dashboard</text>
+        <text x="460" y="110" fill="#9aa3af" font-size="11.5" text-anchor="middle">Kalman / LPF filter → rate limiter</text>
+
+        <!-- Browser / Dashboard -->
+        <rect x="350" y="190" width="220" height="90" rx="12" fill="#1a1d24" stroke="#262b35"/>
+        <text x="460" y="220" fill="#e8e8e8" font-size="14" font-weight="600" text-anchor="middle">🌐 Browser Dashboard</text>
+        <text x="460" y="240" fill="#9aa3af" font-size="11.5" text-anchor="middle">Live raw RPY + servo angles</text>
+        <text x="460" y="256" fill="#9aa3af" font-size="11.5" text-anchor="middle">Manual joystick control</text>
+
+        <!-- Servos -->
+        <rect x="700" y="20" width="180" height="60" rx="12" fill="#1a1d24" stroke="#262b35"/>
+        <text x="790" y="46" fill="#e8e8e8" font-size="13" font-weight="600" text-anchor="middle">⚙️ Pan Servo</text>
+        <text x="790" y="63" fill="#9aa3af" font-size="11" text-anchor="middle">0°–180°</text>
+
+        <rect x="700" y="100" width="180" height="60" rx="12" fill="#1a1d24" stroke="#262b35"/>
+        <text x="790" y="126" fill="#e8e8e8" font-size="13" font-weight="600" text-anchor="middle">⚙️ Tilt Servo</text>
+        <text x="790" y="143" fill="#9aa3af" font-size="11" text-anchor="middle">30°–150°</text>
+
+        <!-- Arrows -->
+        <path d="M220,85 L350,85" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <text x="285" y="76" fill="#7cc4ff" font-size="10.5" text-anchor="middle">Wi-Fi (AP)</text>
+
+        <path d="M570,60 L700,50" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <path d="M570,95 L700,130" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <text x="640" y="85" fill="#7cc4ff" font-size="10.5" text-anchor="middle">PWM</text>
+
+        <path d="M460,190 L460,140" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <path d="M420,140 L420,190" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
+        <text x="500" y="168" fill="#9aa3af" font-size="10" text-anchor="start">view / control</text>
+      </svg>
+      <p class="diagram-legend">
+        ทั้งหมดอยู่ในวง Wi-Fi เดียวกันที่ ESP32-S3 ปล่อยเอง — ไม่ต้องมีอินเทอร์เน็ต ไม่ต้องพึ่งเราเตอร์บ้าน
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="timeline">
+  <div class="wrap">
+    <h2>Progress Timeline</h2>
+    <p class="section-sub">ลำดับที่ทำมาจริงจาก commit history ของ repo</p>
+
+    <div class="timeline">
+      <div class="t-item">
+        <div class="t-dot"></div>
+        <div class="t-phase">Phase 1</div>
+        <div class="t-title">Real-time 3-D RPY visualizer (Python + Phyphox)</div>
+        <p class="t-desc">อ่านค่า attitude จากมือถือผ่าน Phyphox แสดงโมเดลโทรศัพท์ 3 มิติด้วย VPython พร้อม Kalman filter และ FFT วิเคราะห์ความถี่การสั่น</p>
+      </div>
+
+      <div class="t-item">
+        <div class="t-dot"></div>
+        <div class="t-phase">Phase 2</div>
+        <div class="t-title">ESP32 firmware — phone hotspot (STA) + low-pass filter</div>
+        <p class="t-desc">ESP32 ต่อ Wi-Fi ของมือถือเป็น client แล้ว poll ค่า pitch/yaw มาขับ servo pan-tilt ผ่าน low-pass filter → deadband → rate limiter</p>
+      </div>
+
+      <div class="t-item">
+        <div class="t-dot"></div>
+        <div class="t-phase">Phase 3</div>
+        <div class="t-title">Kalman filter variant</div>
+        <p class="t-desc">เพิ่มตัวกรองแบบ Kalman (estimate ทั้งมุมและอัตราการเปลี่ยนแปลง) เป็นทางเลือกแทน low-pass filter สำหรับสัญญาณที่ noise เยอะ</p>
+      </div>
+
+      <div class="t-item">
+        <div class="t-dot"></div>
+        <div class="t-phase">Phase 4</div>
+        <div class="t-title">ESP32-S3 กลายเป็น Access Point + Web Dashboard</div>
+        <p class="t-desc">เปลี่ยนจาก STA เป็น AP ปล่อย Wi-Fi เอง ไม่ต้องพึ่งเราเตอร์บ้าน พร้อมหน้าเว็บ dashboard แสดงค่า raw RPY สด และจอยสติ๊กควบคุมมือได้โดยตรง (auto / manual mode)</p>
+      </div>
+
+      <div class="t-item current">
+        <div class="t-dot"></div>
+        <div class="t-phase">Phase 5 — Current</div>
+        <div class="t-title">Build system + mechanical tuning</div>
+        <p class="t-desc">ปรับ PlatformIO ให้สลับ firmware variant (LPF / Kalman / AP Dashboard) ได้ด้วย environment เดียว ไม่ต้อง copy ไฟล์ และ tune ขอบเขตมุม pan/tilt, deadband, rate limit ให้ไม่ชนกลไกจริง</p>
+      </div>
+
+      <div class="t-item next">
+        <div class="t-dot"></div>
+        <div class="t-phase">Next</div>
+        <div class="t-title">กำลังจะทำต่อ</div>
+        <p class="t-desc">— ใส่รูป/วิดีโอฮาร์ดแวร์จริง, ทดสอบภาคสนามเพิ่มเติม, ปรับแต่งความแม่นยำ —</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="hardware">
+  <div class="wrap">
+    <h2>Hardware</h2>
+    <p class="section-sub">รูป/คลิปของแท่น pan-tilt จริง — เพิ่มได้ทีหลังโดยไม่ต้องแก้หน้านี้ (ดู <code>assets/README.md</code>)</p>
+
+    <div class="gallery">
+      <div class="media-slot">
+        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-1.jpg</code></div></div>
+        <img src="assets/img/hardware-1.jpg" alt="Pan-tilt hardware photo 1">
+      </div>
+      <div class="media-slot">
+        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-2.jpg</code></div></div>
+        <img src="assets/img/hardware-2.jpg" alt="Pan-tilt hardware photo 2">
+      </div>
+      <div class="media-slot">
+        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-3.jpg</code></div></div>
+        <img src="assets/img/hardware-3.jpg" alt="Pan-tilt hardware photo 3">
+      </div>
+      <div class="media-slot video-slot">
+        <div class="placeholder"><div class="icon">🎬</div><div>ใส่คลิปสาธิตที่ <code>assets/video/demo.mp4</code></div></div>
+        <video controls>
+          <source src="assets/video/demo.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <h2>Stack</h2>
+    <div class="chip-row">
+      <span class="chip">ESP32-S3</span>
+      <span class="chip">PlatformIO / Arduino</span>
+      <span class="chip">ESP32Servo</span>
+      <span class="chip">ArduinoJson</span>
+      <span class="chip">WebServer + mDNS</span>
+      <span class="chip">Phyphox (Remote Access)</span>
+      <span class="chip">Kalman filter</span>
+      <span class="chip">Python + VPython</span>
+    </div>
+  </div>
+</section>
+
+<section id="links" style="border-bottom:none;">
+  <div class="wrap">
+    <h2>Links</h2>
+    <div class="links-grid">
+      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">
+        <div class="k">Repository</div>
+        <div class="v">CenterHaHaYo/Smartphone-motion</div>
+      </a>
+      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion/tree/main/on%20ESP32/AP%20Dashboard" target="_blank" rel="noopener">
+        <div class="k">Active Firmware</div>
+        <div class="v">on ESP32 / AP Dashboard</div>
+      </a>
+      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/README.md" target="_blank" rel="noopener">
+        <div class="k">Docs</div>
+        <div class="v">README.md</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Smartphone Motion → Pan-Tilt Platform — built with ESP32-S3 &amp; Phyphox.
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.media-slot img, .hero-media img').forEach(function (img) {
+    img.addEventListener('load', function () {
+      var slot = img.closest('.media-slot, .hero-media');
+      var ph = slot.querySelector('.placeholder');
+      if (ph) ph.style.display = 'none';
+      img.style.display = 'block';
+    });
+  });
+  document.querySelectorAll('.media-slot video').forEach(function (vid) {
+    vid.addEventListener('loadeddata', function () {
+      var slot = vid.closest('.media-slot');
+      var ph = slot.querySelector('.placeholder');
+      if (ph) ph.style.display = 'none';
+      vid.style.display = 'block';
+    });
+  });
+</script>
+
+</body>
+</html>
