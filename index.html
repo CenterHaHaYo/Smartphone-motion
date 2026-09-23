@@ -1,376 +1,593 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smartphone Motion → Pan-Tilt Platform</title>
-<meta name="description" content="Cyber-physical pan-tilt motion control system: a smartphone's orientation, streamed over Wi-Fi, drives a 2-DOF servo gimbal in real time.">
+<title>Smartphone Motion Dashboard</title>
+<meta name="description" content="A simple progress dashboard for the Smartphone Motion project: move your phone, and a camera stand moves the same way.">
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #1a1d24;
-    --panel-2: #14161c;
-    --border: #262b35;
-    --text: #e8e8e8;
-    --muted: #9aa3af;
-    --accent: #7cc4ff;
-    --accent-2: #2f6fed;
+    color-scheme: light;
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --card-2: #f0efec;
+    --border: #e2e0da;
+    --text: #1a1a19;
+    --text-2: #52514e;
+    --muted: #75736d;
+    --accent: #2a78d6;
+    --accent-soft: #e3eefb;
+    --bar: #2a78d6;
+    --good: #0ca30c;
+    --good-ink: #0a7a0a;
+    --good-soft: #e3f5e3;
+    --warn: #fab219;
+    --warn-ink: #8a5a00;
+    --warn-soft: #fdf1d6;
+    --todo-ink: #52514e;
+    --todo-soft: #ecebe7;
+    --bad: #d03b3b;
+    --bad-soft: #fbe6e6;
   }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121211;
+      --card: #1a1a19;
+      --card-2: #232321;
+      --border: #33332f;
+      --text: #f4f3ef;
+      --text-2: #c3c2b7;
+      --muted: #9a998f;
+      --accent: #6da7ec;
+      --accent-soft: #1b2d44;
+      --bar: #3987e5;
+      --good-ink: #5fd35f;
+      --good-soft: #17301a;
+      --warn-ink: #fab219;
+      --warn-soft: #3a2e12;
+      --todo-ink: #c3c2b7;
+      --todo-soft: #2a2a27;
+      --bad-soft: #3a1c1c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121211;
+    --card: #1a1a19;
+    --card-2: #232321;
+    --border: #33332f;
+    --text: #f4f3ef;
+    --text-2: #c3c2b7;
+    --muted: #9a998f;
+    --accent: #6da7ec;
+    --accent-soft: #1b2d44;
+    --bar: #3987e5;
+    --good-ink: #5fd35f;
+    --good-soft: #17301a;
+    --warn-ink: #fab219;
+    --warn-soft: #3a2e12;
+    --todo-ink: #c3c2b7;
+    --todo-soft: #2a2a27;
+    --bad-soft: #3a1c1c;
+  }
+
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
     line-height: 1.6;
   }
   a { color: var(--accent); }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
 
-  header.hero {
-    padding: 64px 0 48px;
-    border-bottom: 1px solid var(--border);
-    background:
-      radial-gradient(600px 300px at 15% -10%, rgba(47,111,237,0.25), transparent),
-      radial-gradient(500px 260px at 85% -20%, rgba(124,196,255,0.18), transparent);
+  /* ---------- Top ---------- */
+  header { padding: 40px 0 8px; }
+  .tag {
+    display: inline-block; font-size: 13px; font-weight: 600;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
   }
-  .eyebrow {
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    background: rgba(124,196,255,0.1);
-    border: 1px solid rgba(124,196,255,0.25);
-    padding: 4px 10px;
-    border-radius: 999px;
-    margin-bottom: 16px;
-  }
-  h1 { font-size: clamp(28px, 4vw, 42px); margin: 0 0 14px; line-height: 1.2; }
-  .lede { font-size: 17px; color: var(--muted); max-width: 640px; margin: 0 0 24px; }
-  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 10px; }
+  .lede { font-size: 18px; color: var(--text-2); margin: 0 0 18px; max-width: 680px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
-    text-decoration: none; border: 1px solid var(--border);
+    display: inline-block; padding: 9px 14px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
   }
-  .btn.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
-  .btn.ghost { color: var(--text); background: var(--panel); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.primary { color: #0b0b0b; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0b0b0b; } }
 
-  .hero-media {
-    margin-top: 36px;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    aspect-ratio: 16 / 8;
-    position: relative;
-    background: var(--panel);
+  /* ---------- Cards / grid ---------- */
+  section { padding: 28px 0 8px; }
+  h2 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px;
   }
-  .hero-media img { width: 100%; height: 100%; object-fit: cover; display: none; }
-  .hero-media .placeholder {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; color: var(--muted); font-size: 14px; text-align: center; padding: 20px;
-  }
-  .hero-media .placeholder .icon { font-size: 30px; }
+  .grid { display: grid; gap: 12px; }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 820px) { .g4 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: 1fr; } }
+  @media (max-width: 620px) { .g2 { grid-template-columns: 1fr; } }
 
-  section { padding: 56px 0; border-bottom: 1px solid var(--border); }
-  section h2 { font-size: 22px; margin: 0 0 6px; }
-  section .section-sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  /* ---------- Big progress ---------- */
+  .progress-card { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 620px) { .progress-card { grid-template-columns: 1fr; } }
+  .big-num { font-size: 56px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big-num small { font-size: 22px; font-weight: 700; color: var(--muted); }
+  .big-label { color: var(--text-2); font-size: 15px; margin-top: 6px; }
+  .meter { height: 14px; background: var(--card-2); border-radius: 999px; overflow: hidden; display: flex; gap: 2px; }
+  .meter span { display: block; height: 100%; }
+  .meter .m-done { background: var(--good); border-radius: 999px 0 0 999px; }
+  .meter .m-doing { background: var(--warn); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 14px; color: var(--text-2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
 
-  /* ---- Architecture diagram ---- */
-  .diagram-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-  }
-  .diagram-card svg { width: 100%; height: auto; display: block; }
-  .diagram-legend { margin-top: 14px; font-size: 13px; color: var(--muted); }
+  /* ---------- Stat tiles ---------- */
+  .stat .n { font-size: 32px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--text-2); font-size: 14px; margin-top: 4px; }
 
-  /* ---- Timeline ---- */
-  .timeline { position: relative; margin-left: 10px; }
-  .timeline::before {
-    content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
-    background: linear-gradient(var(--accent-2), var(--border));
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 10px; align-items: stretch; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 26px; }
+  @media (max-width: 760px) {
+    .steps { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); height: 20px; }
   }
-  .t-item { position: relative; padding: 0 0 28px 32px; }
-  .t-item:last-child { padding-bottom: 0; }
-  .t-dot {
-    position: absolute; left: 0; top: 4px; width: 12px; height: 12px; border-radius: 50%;
-    background: var(--accent-2); border: 2px solid var(--bg); box-shadow: 0 0 0 2px var(--accent-2);
-  }
-  .t-item.current .t-dot { background: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .t-phase { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-  .t-title { font-size: 16px; font-weight: 600; margin: 2px 0 6px; }
-  .t-desc { font-size: 14px; color: var(--muted); margin: 0; }
-  .t-item.next .t-title { color: var(--muted); }
-  .t-item.next .t-dot { background: transparent; box-shadow: 0 0 0 2px var(--border); }
+  .step .emoji { font-size: 34px; line-height: 1; }
+  .step h3 { margin: 10px 0 4px; font-size: 17px; }
+  .step p { margin: 0; color: var(--text-2); font-size: 15px; }
 
-  /* ---- Hardware gallery ---- */
-  .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-  .media-slot {
-    position: relative; border-radius: 12px; overflow: hidden;
-    background: var(--panel); border: 1px solid var(--border);
-    aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+  /* ---------- Status pills ---------- */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
   }
-  .media-slot img, .media-slot video { width: 100%; height: 100%; object-fit: cover; display: none; }
-  .media-slot .placeholder {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; color: var(--muted); font-size: 12.5px; text-align: center; padding: 14px;
-  }
-  .media-slot .placeholder .icon { font-size: 22px; }
-  .media-slot .placeholder code {
-    background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
-    padding: 2px 6px; font-size: 11px; color: var(--accent);
-  }
-  .video-slot { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+  .pill.done  { color: var(--good-ink); background: var(--good-soft); }
+  .pill.doing { color: var(--warn-ink); background: var(--warn-soft); }
+  .pill.todo  { color: var(--todo-ink); background: var(--todo-soft); }
 
-  /* ---- Stack / links ---- */
-  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    font-size: 13px; background: var(--panel); border: 1px solid var(--border);
-    border-radius: 999px; padding: 6px 12px; color: var(--text);
+  /* ---------- Checklist ---------- */
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .filters button {
+    font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card); color: var(--text-2);
   }
-  .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-  .link-card {
-    display: block; text-decoration: none; color: var(--text);
-    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px;
+  .filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start;
+    padding: 12px 0; border-top: 1px solid var(--border);
   }
-  .link-card .k { font-size: 13px; color: var(--muted); }
-  .link-card .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .list li:first-child { border-top: none; padding-top: 2px; }
+  .list .t { font-weight: 600; }
+  .list .d { grid-column: 1 / -1; color: var(--text-2); font-size: 15px; margin-top: -2px; }
 
-  footer { padding: 32px 0 60px; color: var(--muted); font-size: 13px; }
+  /* ---------- Parts ---------- */
+  .part h3 { margin: 0 0 4px; font-size: 17px; display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .part p { margin: 0 0 10px; color: var(--text-2); font-size: 15px; }
+  .files { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+  .files li { padding: 5px 0; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; gap: 8px; }
+  .files li span:last-child { color: var(--muted); text-align: right; }
+  .files a { text-decoration: none; word-break: break-word; }
+  .files a:hover { text-decoration: underline; }
+  .star { color: var(--good-ink); font-weight: 700; }
+
+  /* ---------- Chart ---------- */
+  .chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; align-items: end; height: 180px; padding-top: 22px; border-bottom: 1px solid var(--border); }
+  .col { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: default; }
+  .col .bar { width: 60%; max-width: 44px; background: var(--bar); border-radius: 4px 4px 0 0; min-height: 0; }
+  .col .val { font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+  .col:hover .bar, .col:focus .bar { filter: brightness(1.12); }
+  .xlabels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .tip {
+    position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); font-size: 13px; padding: 5px 8px; border-radius: 6px;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 2;
+  }
+  .col:hover .tip, .col:focus .tip { opacity: 1; }
+  .col:first-child .tip { left: 0; transform: none; }
+  .col:last-child .tip { left: auto; right: 0; transform: none; }
+  .chart-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+
+  /* ---------- Updates ---------- */
+  .updates { list-style: none; margin: 0; padding: 0; }
+  .updates li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 15px; }
+  .updates li:first-child { border-top: none; padding-top: 0; }
+  .updates .date { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; }
+  .updates .who { color: var(--muted); font-size: 13px; }
+
+  /* ---------- Problems ---------- */
+  .problems { margin: 0; padding-left: 0; list-style: none; }
+  .problems li { padding: 10px 0 10px 30px; border-top: 1px solid var(--border); position: relative; color: var(--text-2); font-size: 15px; }
+  .problems li:first-child { border-top: none; padding-top: 0; }
+  .problems li:first-child::before { top: 0; }
+  .problems li::before { content: "⚠️"; position: absolute; left: 0; top: 10px; }
+  .problems b { color: var(--text); }
+
+  /* ---------- Words ---------- */
+  dl.words { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+  @media (max-width: 620px) { dl.words { grid-template-columns: 1fr; } }
+  dl.words div { border-top: 1px solid var(--border); padding-top: 8px; }
+  dl.words dt { font-weight: 700; }
+  dl.words dd { margin: 2px 0 0; color: var(--text-2); font-size: 15px; }
+
+  /* ---------- Diagram ---------- */
+  details.diagram summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+  details.diagram img { width: 100%; height: auto; display: block; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .theme-btn { position: absolute; top: 14px; right: 16px; }
+  .theme-btn button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--text-2); cursor: pointer; }
+  .top { position: relative; }
 </style>
 </head>
 <body>
 
-<header class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Cyber-Physical Motion Control</span>
-    <h1>Smartphone Motion → Pan-Tilt Platform</h1>
-    <p class="lede">
-      A phone's orientation (roll / pitch / yaw), streamed live over Wi-Fi from
-      <a href="https://phyphox.org/" target="_blank" rel="noopener">Phyphox</a>,
-      drives a 2-DOF pan-tilt servo gimbal in real time — filtered, rate-limited,
-      and now controllable from a self-hosted web dashboard with no home router required.
-    </p>
-    <div class="cta-row">
-      <a class="btn primary" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub Repo</a>
-      <a class="btn ghost" href="https://github.com/CenterHaHaYo/Smartphone-motion/tree/main/on%20ESP32" target="_blank" rel="noopener">Firmware</a>
-      <a class="btn ghost" href="#timeline">Progress Timeline</a>
-    </div>
+<div class="top wrap">
+  <div class="theme-btn"><button id="themeBtn" type="button" aria-label="Switch light or dark mode">🌓 Theme</button></div>
+</div>
 
-    <div class="hero-media">
-      <div class="placeholder">
-        <div class="icon">📷</div>
-        <div>ใส่รูป/วิดีโอฮาร์ดแวร์จริงได้ที่ <code>assets/img/hero.jpg</code></div>
-      </div>
-      <img id="hero-img" src="assets/img/hero.jpg" alt="Pan-tilt hardware">
+<header>
+  <div class="wrap">
+    <span class="tag">Project dashboard</span>
+    <h1>📱 Smartphone Motion</h1>
+    <p class="lede">
+      Move your phone, and a small camera stand moves the same way.
+      This page shows what is finished, what we are working on now, and what comes next.
+    </p>
+    <div class="btns">
+      <a class="btn primary" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">See the code on GitHub</a>
+      <a class="btn" href="#checklist">Progress checklist</a>
+      <a class="btn" href="#words">What do the words mean?</a>
     </div>
   </div>
 </header>
 
-<section id="architecture">
-  <div class="wrap">
-    <h2>System Architecture</h2>
-    <p class="section-sub">มือถือเป็นเซนเซอร์ทิศทาง — ESP32-S3 เป็นทั้งตัวควบคุมและ Wi-Fi Access Point ของตัวเอง</p>
+<main class="wrap">
 
-    <div class="diagram-card">
-      <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#7cc4ff"/>
-          </marker>
-        </defs>
-
-        <!-- Phone -->
-        <rect x="20" y="40" width="200" height="90" rx="12" fill="#1a1d24" stroke="#262b35"/>
-        <text x="120" y="72" fill="#e8e8e8" font-size="14" font-weight="600" text-anchor="middle">📱 Phone</text>
-        <text x="120" y="92" fill="#9aa3af" font-size="11.5" text-anchor="middle">Phyphox — Remote Access</text>
-        <text x="120" y="108" fill="#9aa3af" font-size="11.5" text-anchor="middle">pitch / roll / yaw over HTTP</text>
-
-        <!-- ESP32-S3 -->
-        <rect x="350" y="30" width="220" height="110" rx="12" fill="#1a1d24" stroke="#2f6fed" stroke-width="1.5"/>
-        <text x="460" y="58" fill="#7cc4ff" font-size="14" font-weight="700" text-anchor="middle">🧠 ESP32-S3</text>
-        <text x="460" y="78" fill="#9aa3af" font-size="11.5" text-anchor="middle">Wi-Fi Access Point (own network)</text>
-        <text x="460" y="94" fill="#9aa3af" font-size="11.5" text-anchor="middle">Web Server + Dashboard</text>
-        <text x="460" y="110" fill="#9aa3af" font-size="11.5" text-anchor="middle">Kalman / LPF filter → rate limiter</text>
-
-        <!-- Browser / Dashboard -->
-        <rect x="350" y="190" width="220" height="90" rx="12" fill="#1a1d24" stroke="#262b35"/>
-        <text x="460" y="220" fill="#e8e8e8" font-size="14" font-weight="600" text-anchor="middle">🌐 Browser Dashboard</text>
-        <text x="460" y="240" fill="#9aa3af" font-size="11.5" text-anchor="middle">Live raw RPY + servo angles</text>
-        <text x="460" y="256" fill="#9aa3af" font-size="11.5" text-anchor="middle">Manual joystick control</text>
-
-        <!-- Servos -->
-        <rect x="700" y="20" width="180" height="60" rx="12" fill="#1a1d24" stroke="#262b35"/>
-        <text x="790" y="46" fill="#e8e8e8" font-size="13" font-weight="600" text-anchor="middle">⚙️ Pan Servo</text>
-        <text x="790" y="63" fill="#9aa3af" font-size="11" text-anchor="middle">0°–180°</text>
-
-        <rect x="700" y="100" width="180" height="60" rx="12" fill="#1a1d24" stroke="#262b35"/>
-        <text x="790" y="126" fill="#e8e8e8" font-size="13" font-weight="600" text-anchor="middle">⚙️ Tilt Servo</text>
-        <text x="790" y="143" fill="#9aa3af" font-size="11" text-anchor="middle">30°–150°</text>
-
-        <!-- Arrows -->
-        <path d="M220,85 L350,85" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
-        <text x="285" y="76" fill="#7cc4ff" font-size="10.5" text-anchor="middle">Wi-Fi (AP)</text>
-
-        <path d="M570,60 L700,50" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
-        <path d="M570,95 L700,130" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
-        <text x="640" y="85" fill="#7cc4ff" font-size="10.5" text-anchor="middle">PWM</text>
-
-        <path d="M460,190 L460,140" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
-        <path d="M420,140 L420,190" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)" fill="none"/>
-        <text x="500" y="168" fill="#9aa3af" font-size="10" text-anchor="start">view / control</text>
-      </svg>
-      <p class="diagram-legend">
-        ทั้งหมดอยู่ในวง Wi-Fi เดียวกันที่ ESP32-S3 ปล่อยเอง — ไม่ต้องมีอินเทอร์เน็ต ไม่ต้องพึ่งเราเตอร์บ้าน
-      </p>
-    </div>
-  </div>
-</section>
-
-<section id="timeline">
-  <div class="wrap">
-    <h2>Progress Timeline</h2>
-    <p class="section-sub">ลำดับที่ทำมาจริงจาก commit history ของ repo</p>
-
-    <div class="timeline">
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-phase">Phase 1</div>
-        <div class="t-title">Real-time 3-D RPY visualizer (Python + Phyphox)</div>
-        <p class="t-desc">อ่านค่า attitude จากมือถือผ่าน Phyphox แสดงโมเดลโทรศัพท์ 3 มิติด้วย VPython พร้อม Kalman filter และ FFT วิเคราะห์ความถี่การสั่น</p>
+  <!-- ===== Overall progress ===== -->
+  <section aria-labelledby="overall">
+    <h2 id="overall" class="sr-only">Overall progress</h2>
+    <div class="card progress-card">
+      <div>
+        <div class="big-num"><span id="pct">0</span><small>%</small></div>
+        <div class="big-label">of the plan is done</div>
       </div>
-
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-phase">Phase 2</div>
-        <div class="t-title">ESP32 firmware — phone hotspot (STA) + low-pass filter</div>
-        <p class="t-desc">ESP32 ต่อ Wi-Fi ของมือถือเป็น client แล้ว poll ค่า pitch/yaw มาขับ servo pan-tilt ผ่าน low-pass filter → deadband → rate limiter</p>
-      </div>
-
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-phase">Phase 3</div>
-        <div class="t-title">Kalman filter variant</div>
-        <p class="t-desc">เพิ่มตัวกรองแบบ Kalman (estimate ทั้งมุมและอัตราการเปลี่ยนแปลง) เป็นทางเลือกแทน low-pass filter สำหรับสัญญาณที่ noise เยอะ</p>
-      </div>
-
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-phase">Phase 4</div>
-        <div class="t-title">ESP32-S3 กลายเป็น Access Point + Web Dashboard</div>
-        <p class="t-desc">เปลี่ยนจาก STA เป็น AP ปล่อย Wi-Fi เอง ไม่ต้องพึ่งเราเตอร์บ้าน พร้อมหน้าเว็บ dashboard แสดงค่า raw RPY สด และจอยสติ๊กควบคุมมือได้โดยตรง (auto / manual mode)</p>
-      </div>
-
-      <div class="t-item current">
-        <div class="t-dot"></div>
-        <div class="t-phase">Phase 5 — Current</div>
-        <div class="t-title">Build system + mechanical tuning</div>
-        <p class="t-desc">ปรับ PlatformIO ให้สลับ firmware variant (LPF / Kalman / AP Dashboard) ได้ด้วย environment เดียว ไม่ต้อง copy ไฟล์ และ tune ขอบเขตมุม pan/tilt, deadband, rate limit ให้ไม่ชนกลไกจริง</p>
-      </div>
-
-      <div class="t-item next">
-        <div class="t-dot"></div>
-        <div class="t-phase">Next</div>
-        <div class="t-title">กำลังจะทำต่อ</div>
-        <p class="t-desc">— ใส่รูป/วิดีโอฮาร์ดแวร์จริง, ทดสอบภาคสนามเพิ่มเติม, ปรับแต่งความแม่นยำ —</p>
+      <div>
+        <div class="meter" id="meter" role="img" aria-label="Progress bar"></div>
+        <div class="legend" id="legend"></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="hardware">
-  <div class="wrap">
-    <h2>Hardware</h2>
-    <p class="section-sub">รูป/คลิปของแท่น pan-tilt จริง — เพิ่มได้ทีหลังโดยไม่ต้องแก้หน้านี้ (ดู <code>assets/README.md</code>)</p>
+  <!-- ===== Quick numbers ===== -->
+  <section aria-labelledby="numbers">
+    <h2 id="numbers">Quick numbers</h2>
+    <p class="sub">A fast look at the size of the project.</p>
+    <div class="grid g4">
+      <div class="card stat"><div class="n">5</div><div class="l">Python programs<br>(run on a computer)</div></div>
+      <div class="card stat"><div class="n">5</div><div class="l">ESP32 programs<br>(run on the small board)</div></div>
+      <div class="card stat"><div class="n" id="statCommits">31</div><div class="l">Saved changes<br>(commits)</div></div>
+      <div class="card stat"><div class="n" id="statLast">Sep 22</div><div class="l">Last update<br><span id="statLastYear">2026</span></div></div>
+    </div>
+  </section>
 
-    <div class="gallery">
-      <div class="media-slot">
-        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-1.jpg</code></div></div>
-        <img src="assets/img/hardware-1.jpg" alt="Pan-tilt hardware photo 1">
+  <!-- ===== How it works ===== -->
+  <section aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+    <p class="sub">Three simple steps. No home Wi-Fi is needed.</p>
+    <div class="steps">
+      <div class="card step">
+        <div class="emoji">📱</div>
+        <h3>1. The phone feels the motion</h3>
+        <p>A free app called <a href="https://phyphox.org/" target="_blank" rel="noopener">Phyphox</a> reads how the phone is tilted and turned, and shares these numbers over Wi-Fi.</p>
       </div>
-      <div class="media-slot">
-        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-2.jpg</code></div></div>
-        <img src="assets/img/hardware-2.jpg" alt="Pan-tilt hardware photo 2">
+      <div class="arrow" aria-hidden="true">➜</div>
+      <div class="card step">
+        <div class="emoji">🧠</div>
+        <h3>2. A small board does the thinking</h3>
+        <p>An ESP32 board makes its own Wi-Fi, reads the phone's numbers, and smooths out small shakes.</p>
       </div>
-      <div class="media-slot">
-        <div class="placeholder"><div class="icon">📷</div><div>ใส่ที่ <code>assets/img/hardware-3.jpg</code></div></div>
-        <img src="assets/img/hardware-3.jpg" alt="Pan-tilt hardware photo 3">
-      </div>
-      <div class="media-slot video-slot">
-        <div class="placeholder"><div class="icon">🎬</div><div>ใส่คลิปสาธิตที่ <code>assets/video/demo.mp4</code></div></div>
-        <video controls>
-          <source src="assets/video/demo.mp4" type="video/mp4">
-        </video>
+      <div class="arrow" aria-hidden="true">➜</div>
+      <div class="card step">
+        <div class="emoji">🎥</div>
+        <h3>3. Two motors move the stand</h3>
+        <p>One motor turns the stand left and right. The other tilts it up and down. It follows your phone.</p>
       </div>
     </div>
-  </div>
-</section>
+    <p class="sub" style="margin-top:12px">
+      You can also open a control web page on the board and move the stand with an on-screen joystick.
+      On a computer, Python programs show a 3D phone that moves just like the real one.
+    </p>
+  </section>
 
-<section id="stack">
-  <div class="wrap">
-    <h2>Stack</h2>
-    <div class="chip-row">
-      <span class="chip">ESP32-S3</span>
-      <span class="chip">PlatformIO / Arduino</span>
-      <span class="chip">ESP32Servo</span>
-      <span class="chip">ArduinoJson</span>
-      <span class="chip">WebServer + mDNS</span>
-      <span class="chip">Phyphox (Remote Access)</span>
-      <span class="chip">Kalman filter</span>
-      <span class="chip">Python + VPython</span>
+  <!-- ===== Checklist ===== -->
+  <section id="checklist" aria-labelledby="checkh">
+    <h2 id="checkh">Progress checklist</h2>
+    <p class="sub">Every goal in the plan, and where it stands today.</p>
+    <div class="card">
+      <div class="filters" role="group" aria-label="Filter the list">
+        <button type="button" data-f="all" aria-pressed="true">All</button>
+        <button type="button" data-f="done" aria-pressed="false">✅ Done</button>
+        <button type="button" data-f="doing" aria-pressed="false">🔧 Working on it</button>
+        <button type="button" data-f="todo" aria-pressed="false">📝 Planned</button>
+      </div>
+      <ul class="list" id="goalList"></ul>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="links" style="border-bottom:none;">
-  <div class="wrap">
-    <h2>Links</h2>
-    <div class="links-grid">
-      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">
-        <div class="k">Repository</div>
-        <div class="v">CenterHaHaYo/Smartphone-motion</div>
-      </a>
-      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion/tree/main/on%20ESP32/AP%20Dashboard" target="_blank" rel="noopener">
-        <div class="k">Active Firmware</div>
-        <div class="v">on ESP32 / AP Dashboard</div>
-      </a>
-      <a class="link-card" href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/README.md" target="_blank" rel="noopener">
-        <div class="k">Docs</div>
-        <div class="v">README.md</div>
-      </a>
+  <!-- ===== Parts ===== -->
+  <section aria-labelledby="parts">
+    <h2 id="parts">What is in the project</h2>
+    <p class="sub">The project has two main parts. Click a file name to see it on GitHub.</p>
+    <div class="grid g2">
+      <div class="card part">
+        <h3>💻 Computer programs (Python) <span class="pill done">✅ Working</span></h3>
+        <p>These run on a laptop. They show a 3D phone on the screen that moves with your real phone.
+           They can also draw graphs and save the motion to a file.</p>
+        <ul class="files">
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/Kalman%20Filter/smMotionV2.py" target="_blank" rel="noopener">smMotionV2.py</a><span class="star">★ Best one to start with</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/Kalman%20Filter/smartphone_motionV2.py" target="_blank" rel="noopener">smartphone_motionV2.py</a><span>Older smoothing version</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/FFT/smartphone_motionV2_fft.py" target="_blank" rel="noopener">smartphone_motionV2_fft.py</a><span>Finds how fast you shake</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/FFT/smartphone_motionV1.py" target="_blank" rel="noopener">smartphone_motionV1.py</a><span>First, simple version</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/2DOF_motion.py" target="_blank" rel="noopener">2DOF_motion.py</a><span>Camera stand simulator</span></li>
+        </ul>
+      </div>
+      <div class="card part">
+        <h3>🔌 Board programs (ESP32) <span class="pill done">✅ Working</span></h3>
+        <p>These run on the ESP32 board and move the real motors.
+           The newest ones make their own Wi-Fi and have a control web page.</p>
+        <ul class="files">
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/AP%20Dashboard/esp32-smartphone-control-APkm.cpp" target="_blank" rel="noopener">esp32-smartphone-control-APkm.cpp</a><span class="star">★ Newest: own Wi-Fi + web page + smoothing</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/AP%20Dashboard/esp32-smartphone-control-AP.cpp" target="_blank" rel="noopener">esp32-smartphone-control-AP.cpp</a><span>Own Wi-Fi + web page</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/Kalman%20Filter/esp32-smartphone-control-kalman.cpp" target="_blank" rel="noopener">esp32-smartphone-control-kalman.cpp</a><span>Uses phone hotspot, strong smoothing</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/LPF/esp32-smartphone-control-2.cpp" target="_blank" rel="noopener">esp32-smartphone-control-2.cpp</a><span>Uses phone hotspot, soft smoothing</span></li>
+          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/LPF/esp32-smartphone-control.cpp" target="_blank" rel="noopener">esp32-smartphone-control.cpp</a><span>First board version</span></li>
+        </ul>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- ===== Activity ===== -->
+  <section aria-labelledby="activity">
+    <h2 id="activity">Activity</h2>
+    <p class="sub">How much work was saved to the project each month, and the latest changes.</p>
+    <div class="grid g2">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:2px">Changes per month</div>
+        <div style="font-size:13px;color:var(--muted)">Number of commits (saved changes)</div>
+        <div class="chart" id="chart" role="img" aria-label="Bar chart of commits per month"></div>
+        <div class="xlabels" id="xlabels" aria-hidden="true"></div>
+        <p class="chart-note" id="chartNote">Tip: hover over a bar to see the number.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:10px">Latest changes</div>
+        <ul class="updates" id="updates"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Problems ===== -->
+  <section aria-labelledby="probs">
+    <h2 id="probs">Known problems</h2>
+    <p class="sub">Things we found that still need fixing. None of them stop the project from working.</p>
+    <div class="card">
+      <ul class="problems">
+        <li><b>Saved file has a wrong column.</b> In <code>smMotionV2.py</code>, the "yaw" column in the saved file shows the "roll" numbers by mistake.</li>
+        <li><b>A math sign is wrong in an older program.</b> In <code>smartphone_motionV2.py</code>, one small math step uses the wrong sign.</li>
+        <li><b>The older program gets stuck at some angles.</b> The same older program acts strangely when the phone points straight up or down. The newer <code>smMotionV2.py</code> does not have this problem.</li>
+        <li><b>The older program gets slower over time.</b> Its graphs keep growing and use more and more memory.</li>
+        <li><b>Errors are hidden.</b> If the phone is not connected, the programs do not say why.</li>
+        <li><b>Settings are inside the code.</b> You must edit the code to change the phone's address.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===== Words ===== -->
+  <section id="words" aria-labelledby="wordsh">
+    <h2 id="wordsh">What do the words mean?</h2>
+    <p class="sub">A short guide to the words used in this project.</p>
+    <div class="card">
+      <dl class="words">
+        <div><dt>Roll</dt><dd>Tipping the phone to the left or right.</dd></div>
+        <div><dt>Pitch</dt><dd>Tilting the phone forward or backward.</dd></div>
+        <div><dt>Yaw</dt><dd>Turning the phone left or right, like a door.</dd></div>
+        <div><dt>Pan and tilt</dt><dd>Pan means turning the stand left and right. Tilt means moving it up and down.</dd></div>
+        <div><dt>Servo</dt><dd>A small motor that can turn to an exact angle.</dd></div>
+        <div><dt>ESP32</dt><dd>A small, cheap computer board with Wi-Fi built in.</dd></div>
+        <div><dt>Phyphox</dt><dd>A free phone app that reads the phone's sensors and shares the data.</dd></div>
+        <div><dt>Filter (smoothing)</dt><dd>Math that removes small shakes so the motion looks calm. "Kalman" and "low-pass" are two kinds.</dd></div>
+        <div><dt>FFT</dt><dd>Math that finds how many times per second something shakes.</dd></div>
+        <div><dt>Commit</dt><dd>One saved change to the project's code.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ===== Diagram ===== -->
+  <section aria-labelledby="diag">
+    <h2 id="diag">Full system map</h2>
+    <p class="sub">For people who want all the details: how every piece connects.</p>
+    <div class="card">
+      <details class="diagram">
+        <summary>Show the full diagram</summary>
+        <img src="My%20Diagram.png" alt="Detailed diagram of how the phone, the Python programs and the ESP32 board connect" loading="lazy">
+      </details>
+    </div>
+  </section>
+
+</main>
 
 <footer>
   <div class="wrap">
-    Smartphone Motion → Pan-Tilt Platform — built with ESP32-S3 &amp; Phyphox.
+    Smartphone Motion · Made with a phone, an ESP32 board and two small motors ·
+    <a href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub</a>
+    <br><span id="dataNote">Checklist last reviewed: September 2026.</span>
   </div>
 </footer>
 
 <script>
-  document.querySelectorAll('.media-slot img, .hero-media img').forEach(function (img) {
-    img.addEventListener('load', function () {
-      var slot = img.closest('.media-slot, .hero-media');
-      var ph = slot.querySelector('.placeholder');
-      if (ph) ph.style.display = 'none';
-      img.style.display = 'block';
+(function () {
+  var REPO = "CenterHaHaYo/Smartphone-motion";
+
+  /* ---------- Theme toggle (remembered only in this browser) ---------- */
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem("sm-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var cur = root.getAttribute("data-theme");
+    if (!cur) cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    var next = cur === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("sm-theme", next); } catch (e) {}
+  });
+
+  /* ---------- Goals: edit this list to update the dashboard ---------- */
+  // status: "done" | "doing" | "todo"
+  var GOALS = [
+    { s: "done",  t: "Read the phone's motion on a computer", d: "Python gets the tilt and turn numbers from the Phyphox app over Wi-Fi." },
+    { s: "done",  t: "Show a 3D phone that moves like the real one", d: "A 3D model on the screen copies every move of the phone." },
+    { s: "done",  t: "Smooth out small shakes", d: "A Kalman filter makes the numbers calm and steady." },
+    { s: "done",  t: "Find how fast the phone shakes", d: "FFT math shows the shaking speed on each axis." },
+    { s: "done",  t: "Save motion to a file", d: "One click records 10 seconds of motion into a CSV file." },
+    { s: "done",  t: "Simulate the camera stand on screen", d: "A 3D camera stand turns and tilts with the phone before we build the real one." },
+    { s: "done",  t: "Move real motors with the ESP32 board", d: "The board reads the phone and moves two servo motors smoothly." },
+    { s: "done",  t: "Board makes its own Wi-Fi + control web page", d: "No home router needed. The web page shows live numbers and has a joystick." },
+    { s: "done",  t: "Draw a full system map", d: "One diagram shows how every piece connects." },
+    { s: "doing", t: "Tune the motor limits", d: "Setting safe angles so the stand never hits its own frame." },
+    { s: "doing", t: "Build this progress dashboard", d: "A simple web page so anyone can follow the project." },
+    { s: "todo",  t: "Fix the known problems", d: "The wrong column in the saved file, the math sign, and the other items listed below." },
+    { s: "todo",  t: "Add photos and a demo video of the real stand", d: "So people can see it working." },
+    { s: "todo",  t: "Join the 5 Python programs into one", d: "One program with simple on/off options instead of five copies." },
+    { s: "todo",  t: "Easier setup", d: "Add a list of needed tools and find the phone on the network by itself." },
+    { s: "todo",  t: "Replay mode", d: "Play a saved motion file back through the 3D view." }
+  ];
+
+  var LABEL = { done: "✅ Done", doing: "🔧 Working on it", todo: "📝 Planned" };
+  var count = { done: 0, doing: 0, todo: 0 };
+  GOALS.forEach(function (g) { count[g.s]++; });
+  var total = GOALS.length;
+
+  // Overall %: done = full credit, in progress = half credit
+  var pct = Math.round(((count.done + count.doing * 0.5) / total) * 100);
+  document.getElementById("pct").textContent = pct;
+
+  var meter = document.getElementById("meter");
+  meter.setAttribute("aria-label", count.done + " done, " + count.doing + " in progress, " + count.todo + " planned, out of " + total + " goals");
+  meter.innerHTML =
+    '<span class="m-done" style="width:' + (count.done / total * 100) + '%"></span>' +
+    '<span class="m-doing" style="width:' + (count.doing / total * 100) + '%"></span>';
+  document.getElementById("legend").innerHTML =
+    '<span><i style="background:var(--good)"></i>' + count.done + ' done</span>' +
+    '<span><i style="background:var(--warn)"></i>' + count.doing + ' working on it</span>' +
+    '<span><i style="background:var(--card-2);outline:1px solid var(--border)"></i>' + count.todo + ' planned</span>' +
+    '<span style="color:var(--muted)">' + total + ' goals in total</span>';
+
+  var list = document.getElementById("goalList");
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function renderGoals(filter) {
+    list.innerHTML = GOALS.filter(function (g) { return filter === "all" || g.s === filter; }).map(function (g) {
+      return '<li><span class="t">' + esc(g.t) + '</span><span class="pill ' + g.s + '">' + LABEL[g.s] + '</span><span class="d">' + esc(g.d) + '</span></li>';
+    }).join("");
+  }
+  renderGoals("all");
+  document.querySelectorAll(".filters button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".filters button").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true");
+      renderGoals(b.getAttribute("data-f"));
     });
   });
-  document.querySelectorAll('.media-slot video').forEach(function (vid) {
-    vid.addEventListener('loadeddata', function () {
-      var slot = vid.closest('.media-slot');
-      var ph = slot.querySelector('.placeholder');
-      if (ph) ph.style.display = 'none';
-      vid.style.display = 'block';
-    });
-  });
+
+  /* ---------- Activity (built-in data; refreshed live from GitHub when possible) ---------- */
+  var FALLBACK = [
+    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Removed old build setup files" },
+    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Added a project progress web page" },
+    { date: "2026-09-22", who: "Poohdis", msg: "Added the full system diagram" },
+    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Board now makes its own Wi-Fi with a control web page" },
+    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Added Kalman smoothing to the board program" },
+    { date: "2026-09-21", who: "CenterHaHaYo", msg: "First board program that moves the motors" },
+    { date: "2026-09-21", who: "Poohdis", msg: "Rewrote the project guide (README)" }
+  ];
+  var FALLBACK_MONTHS = { "2026-03": 5, "2026-04": 10, "2026-05": 1, "2026-06": 0, "2026-07": 0, "2026-08": 2, "2026-09": 13 };
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  function drawChart(months) {
+    var keys = Object.keys(months).sort().slice(-7);
+    var max = Math.max.apply(null, keys.map(function (k) { return months[k]; }).concat([1]));
+    var chart = document.getElementById("chart"), xl = document.getElementById("xlabels");
+    chart.style.gridTemplateColumns = xl.style.gridTemplateColumns = "repeat(" + keys.length + ", 1fr)";
+    chart.innerHTML = keys.map(function (k) {
+      var v = months[k], m = MON[+k.slice(5) - 1] + " " + k.slice(0, 4);
+      return '<div class="col" tabindex="0" aria-label="' + m + ': ' + v + ' commits">' +
+        '<span class="tip">' + m + ': ' + v + (v === 1 ? ' commit' : ' commits') + '</span>' +
+        '<span class="val">' + (v || "") + '</span>' +
+        '<span class="bar" style="height:calc(' + (v / max) + ' * (100% - 24px))"></span></div>';
+    }).join("");
+    xl.innerHTML = keys.map(function (k) { return "<span>" + MON[+k.slice(5) - 1] + "</span>"; }).join("");
+    chart.setAttribute("aria-label", "Commits per month: " + keys.map(function (k) { return MON[+k.slice(5) - 1] + " " + months[k]; }).join(", "));
+  }
+
+  function drawUpdates(items) {
+    document.getElementById("updates").innerHTML = items.slice(0, 7).map(function (c) {
+      var d = new Date(c.date + "T00:00:00");
+      return '<li><span class="date">' + MON[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() +
+        '</span><span>' + esc(c.msg) + '<br><span class="who">by ' + esc(c.who) + '</span></span></li>';
+    }).join("");
+  }
+
+  function setLast(dateStr) {
+    var d = new Date(dateStr + "T00:00:00");
+    document.getElementById("statLast").textContent = MON[d.getMonth()] + " " + d.getDate();
+    document.getElementById("statLastYear").textContent = d.getFullYear();
+  }
+
+  drawChart(FALLBACK_MONTHS);
+  drawUpdates(FALLBACK);
+
+  // Live refresh from the public GitHub API (no login). Keeps built-in data if it fails.
+  if (window.fetch) {
+    fetch("https://api.github.com/repos/" + REPO + "/commits?per_page=100")
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        if (!Array.isArray(data) || !data.length) return;
+        var items = data.map(function (c) {
+          return {
+            date: (c.commit.author.date || "").slice(0, 10),
+            who: (c.author && c.author.login) || c.commit.author.name || "unknown",
+            msg: (c.commit.message || "").split("\n")[0]
+          };
+        });
+        var months = {};
+        // fill empty months between first and last so gaps show as 0
+        var first = items[items.length - 1].date.slice(0, 7), last = items[0].date.slice(0, 7);
+        var y = +first.slice(0, 4), m = +first.slice(5);
+        while (true) {
+          var key = y + "-" + (m < 10 ? "0" : "") + m;
+          months[key] = 0;
+          if (key >= last) break;
+          m++; if (m > 12) { m = 1; y++; }
+        }
+        items.forEach(function (it) { months[it.date.slice(0, 7)]++; });
+        drawChart(months);
+        drawUpdates(items);
+        setLast(items[0].date);
+        if (data.length < 100) document.getElementById("statCommits").textContent = data.length;
+        else document.getElementById("statCommits").textContent = "100+";
+        document.getElementById("chartNote").textContent = "Live data from GitHub. Hover over a bar to see the number.";
+      })
+      .catch(function () { /* keep built-in data */ });
+  }
+})();
 </script>
 
 </body>
