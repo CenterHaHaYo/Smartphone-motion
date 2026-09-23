@@ -1,594 +1,1187 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smartphone Motion Dashboard</title>
-<meta name="description" content="A simple progress dashboard for the Smartphone Motion project: move your phone, and a camera stand moves the same way.">
+<title>Pan-Tilt Motion Lab</title>
+<meta name="description" content="Progress dashboard and data pre-processing workbench for the ESP32-S3 + phyphox smartphone-controlled pan-tilt camera platform.">
 <style>
   :root {
     color-scheme: light;
-    --bg: #f6f5f2;
-    --card: #ffffff;
-    --card-2: #f0efec;
-    --border: #e2e0da;
-    --text: #1a1a19;
-    --text-2: #52514e;
-    --muted: #75736d;
-    --accent: #2a78d6;
-    --accent-soft: #e3eefb;
-    --bar: #2a78d6;
-    --good: #0ca30c;
-    --good-ink: #0a7a0a;
-    --good-soft: #e3f5e3;
-    --warn: #fab219;
-    --warn-ink: #8a5a00;
-    --warn-soft: #fdf1d6;
-    --todo-ink: #52514e;
-    --todo-soft: #ecebe7;
-    --bad: #d03b3b;
-    --bad-soft: #fbe6e6;
+    --bg: #f6f5f2; --card: #ffffff; --card-2: #f0efec; --bar-bg: #ecebe7;
+    --border: #e2e0da; --text: #0b0b0b; --text-2: #52514e; --muted: #75736d;
+    --accent: #2a78d6; --accent-soft: #e3eefb;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s8: #e34948;
+    --raw: #a9a79f; --grid: #ecebe7; --axis: #cfcdc6; --band: rgba(250,178,25,.13);
+    --good: #0ca30c; --good-ink: #0a7a0a; --good-soft: #e3f5e3;
+    --warn: #fab219; --warn-ink: #8a5a00; --warn-soft: #fdf1d6;
+    --todo-ink: #52514e; --todo-soft: #ecebe7;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #121211;
-      --card: #1a1a19;
-      --card-2: #232321;
-      --border: #33332f;
-      --text: #f4f3ef;
-      --text-2: #c3c2b7;
-      --muted: #9a998f;
-      --accent: #6da7ec;
-      --accent-soft: #1b2d44;
-      --bar: #3987e5;
-      --good-ink: #5fd35f;
-      --good-soft: #17301a;
-      --warn-ink: #fab219;
-      --warn-soft: #3a2e12;
-      --todo-ink: #c3c2b7;
-      --todo-soft: #2a2a27;
-      --bad-soft: #3a1c1c;
+      --bg: #121211; --card: #1a1a19; --card-2: #232321; --bar-bg: #2a2a27;
+      --border: #33332f; --text: #ffffff; --text-2: #c3c2b7; --muted: #9a998f;
+      --accent: #6da7ec; --accent-soft: #1b2d44;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s8: #e66767;
+      --raw: #62615b; --grid: #2a2a27; --axis: #44443f; --band: rgba(250,178,25,.10);
+      --good-ink: #5fd35f; --good-soft: #17301a; --warn-ink: #fab219; --warn-soft: #3a2e12;
+      --todo-ink: #c3c2b7; --todo-soft: #2a2a27;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #121211;
-    --card: #1a1a19;
-    --card-2: #232321;
-    --border: #33332f;
-    --text: #f4f3ef;
-    --text-2: #c3c2b7;
-    --muted: #9a998f;
-    --accent: #6da7ec;
-    --accent-soft: #1b2d44;
-    --bar: #3987e5;
-    --good-ink: #5fd35f;
-    --good-soft: #17301a;
-    --warn-ink: #fab219;
-    --warn-soft: #3a2e12;
-    --todo-ink: #c3c2b7;
-    --todo-soft: #2a2a27;
-    --bad-soft: #3a1c1c;
+    --bg: #121211; --card: #1a1a19; --card-2: #232321; --bar-bg: #2a2a27;
+    --border: #33332f; --text: #ffffff; --text-2: #c3c2b7; --muted: #9a998f;
+    --accent: #6da7ec; --accent-soft: #1b2d44;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s8: #e66767;
+    --raw: #62615b; --grid: #2a2a27; --axis: #44443f; --band: rgba(250,178,25,.10);
+    --good-ink: #5fd35f; --good-soft: #17301a; --warn-ink: #fab219; --warn-soft: #3a2e12;
+    --todo-ink: #c3c2b7; --todo-soft: #2a2a27;
   }
-
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
+    margin: 0; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 15px; line-height: 1.55;
   }
   a { color: var(--accent); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-
-  /* ---------- Top ---------- */
-  header { padding: 40px 0 8px; }
-  .tag {
-    display: inline-block; font-size: 13px; font-weight: 600;
-    color: var(--accent); background: var(--accent-soft);
-    padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
-  }
-  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 10px; }
-  .lede { font-size: 18px; color: var(--text-2); margin: 0 0 18px; max-width: 680px; }
+  code { font-family: var(--mono); font-size: .9em; background: var(--card-2); padding: 1px 5px; border-radius: 4px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 36px 0 4px; position: relative; }
+  .tag { display: inline-block; font-size: 12.5px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+  h1 { font-size: clamp(26px, 4.5vw, 38px); line-height: 1.15; margin: 0 0 8px; }
+  .lede { font-size: 17px; color: var(--text-2); margin: 0 0 16px; max-width: 780px; }
   .btns { display: flex; flex-wrap: wrap; gap: 8px; }
-  .btn {
-    display: inline-block; padding: 9px 14px; border-radius: 8px;
-    font-size: 14px; font-weight: 600; text-decoration: none;
-    border: 1px solid var(--border); background: var(--card); color: var(--text);
-  }
+  .btn { display: inline-block; padding: 8px 13px; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  :root[data-theme="dark"] .btn.primary { color: #0b0b0b; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #0b0b0b; } }
-
-  /* ---------- Cards / grid ---------- */
-  section { padding: 28px 0 8px; }
-  h2 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 18px;
-  }
-  .grid { display: grid; gap: 12px; }
-  .g4 { grid-template-columns: repeat(4, 1fr); }
-  .g3 { grid-template-columns: repeat(3, 1fr); }
-  .g2 { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 820px) { .g4 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: 1fr; } }
-  @media (max-width: 620px) { .g2 { grid-template-columns: 1fr; } }
-
-  /* ---------- Big progress ---------- */
-  .progress-card { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
-  @media (max-width: 620px) { .progress-card { grid-template-columns: 1fr; } }
-  .big-num { font-size: 56px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-  .big-num small { font-size: 22px; font-weight: 700; color: var(--muted); }
-  .big-label { color: var(--text-2); font-size: 15px; margin-top: 6px; }
-  .meter { height: 14px; background: var(--card-2); border-radius: 999px; overflow: hidden; display: flex; gap: 2px; }
-  .meter span { display: block; height: 100%; }
-  .meter .m-done { background: var(--good); border-radius: 999px 0 0 999px; }
-  .meter .m-doing { background: var(--warn); }
-  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 14px; color: var(--text-2); }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
-
-  /* ---------- Stat tiles ---------- */
-  .stat .n { font-size: 32px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
-  .stat .l { color: var(--text-2); font-size: 14px; margin-top: 4px; }
-
-  /* ---------- How it works ---------- */
-  .steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 10px; align-items: stretch; }
-  .arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 26px; }
-  @media (max-width: 760px) {
-    .steps { grid-template-columns: 1fr; }
-    .arrow { transform: rotate(90deg); height: 20px; }
-  }
-  .step .emoji { font-size: 34px; line-height: 1; }
-  .step h3 { margin: 10px 0 4px; font-size: 17px; }
-  .step p { margin: 0; color: var(--text-2); font-size: 15px; }
-
-  /* ---------- Status pills ---------- */
-  .pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
-  }
-  .pill.done  { color: var(--good-ink); background: var(--good-soft); }
-  .pill.doing { color: var(--warn-ink); background: var(--warn-soft); }
-  .pill.todo  { color: var(--todo-ink); background: var(--todo-soft); }
-
-  /* ---------- Checklist ---------- */
-  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .filters button {
-    font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
-    border: 1px solid var(--border); background: var(--card); color: var(--text-2);
-  }
-  .filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-  .list { list-style: none; margin: 0; padding: 0; }
-  .list li {
-    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: start;
-    padding: 12px 0; border-top: 1px solid var(--border);
-  }
-  .list li:first-child { border-top: none; padding-top: 2px; }
-  .list .t { font-weight: 600; }
-  .list .d { grid-column: 1 / -1; color: var(--text-2); font-size: 15px; margin-top: -2px; }
-
-  /* ---------- Parts ---------- */
-  .part h3 { margin: 0 0 4px; font-size: 17px; display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .part p { margin: 0 0 10px; color: var(--text-2); font-size: 15px; }
-  .files { list-style: none; margin: 0; padding: 0; font-size: 14px; }
-  .files li { padding: 5px 0; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; gap: 8px; }
-  .files li span:last-child { color: var(--muted); text-align: right; }
-  .files a { text-decoration: none; word-break: break-word; }
-  .files a:hover { text-decoration: underline; }
-  .star { color: var(--good-ink); font-weight: 700; }
-
-  /* ---------- Chart ---------- */
-  .chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; align-items: end; height: 180px; padding-top: 22px; border-bottom: 1px solid var(--border); }
-  .col { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; cursor: default; }
-  .col .bar { width: 60%; max-width: 44px; background: var(--bar); border-radius: 4px 4px 0 0; min-height: 0; }
-  .col .val { font-size: 13px; font-weight: 700; color: var(--text-2); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
-  .col:hover .bar, .col:focus .bar { filter: brightness(1.12); }
-  .xlabels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .tip {
-    position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-    background: var(--text); color: var(--bg); font-size: 13px; padding: 5px 8px; border-radius: 6px;
-    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 2;
-  }
-  .col:hover .tip, .col:focus .tip { opacity: 1; }
-  .col:first-child .tip { left: 0; transform: none; }
-  .col:last-child .tip { left: auto; right: 0; transform: none; }
-  .chart-note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
-
-  /* ---------- Updates ---------- */
-  .updates { list-style: none; margin: 0; padding: 0; }
-  .updates li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 15px; }
-  .updates li:first-child { border-top: none; padding-top: 0; }
-  .updates .date { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; }
-  .updates .who { color: var(--muted); font-size: 13px; }
-
-  /* ---------- Problems ---------- */
-  .problems { margin: 0; padding-left: 0; list-style: none; }
-  .problems li { padding: 10px 0 10px 30px; border-top: 1px solid var(--border); position: relative; color: var(--text-2); font-size: 15px; }
-  .problems li:first-child { border-top: none; padding-top: 0; }
-  .problems li:first-child::before { top: 0; }
-  .problems li::before { content: "⚠️"; position: absolute; left: 0; top: 10px; }
-  .problems b { color: var(--text); }
-
-  /* ---------- Words ---------- */
-  dl.words { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
-  @media (max-width: 620px) { dl.words { grid-template-columns: 1fr; } }
-  dl.words div { border-top: 1px solid var(--border); padding-top: 8px; }
-  dl.words dt { font-weight: 700; }
-  dl.words dd { margin: 2px 0 0; color: var(--text-2); font-size: 15px; }
-
-  /* ---------- Diagram ---------- */
-  details.diagram summary { cursor: pointer; font-weight: 600; color: var(--accent); }
-  details.diagram img { width: 100%; height: auto; display: block; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
-
-  footer { padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
-  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .btn.sm { padding: 5px 10px; font-size: 13px; }
   .theme-btn { position: absolute; top: 14px; right: 16px; }
-  .theme-btn button { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--text-2); cursor: pointer; }
-  .top { position: relative; }
+  section { padding: 26px 0 6px; }
+  h2 { font-size: 21px; margin: 0 0 2px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 14.5px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .grid { display: grid; gap: 12px; }
+ 
+  /* Progress */
+  .prog { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .prog { grid-template-columns: minmax(0, 1fr); } }
+  .big { display: flex; align-items: baseline; gap: 10px; }
+  .big-num { font-size: 48px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big-num small { font-size: 20px; color: var(--muted); }
+  .meter { height: 12px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; display: flex; gap: 2px; margin-top: 12px; }
+  .meter span { display: block; height: 100%; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 13px; color: var(--text-2); }
+  .legend-row i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+  .phases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  @media (max-width: 620px) { .phases { grid-template-columns: 1fr; } }
+  .phase { background: var(--card-2); border-radius: 10px; padding: 10px 12px; }
+  .phase b { display: block; font-size: 14px; }
+  .phase .pb { height: 6px; background: var(--bar-bg); border-radius: 99px; margin-top: 6px; overflow: hidden; }
+  .phase .pb span { display: block; height: 100%; background: var(--good); border-radius: 99px; }
+  .phase small { color: var(--muted); font-size: 12.5px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .filters button { font: inherit; font-size: 13px; padding: 4px 11px; border-radius: 999px; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text-2); }
+  .filters button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .list { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow: auto; }
+  .list li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--border); }
+  .list li:first-child { border-top: none; }
+  .list .t { font-weight: 600; font-size: 14px; }
+  .list .d { grid-column: 1 / -1; color: var(--text-2); font-size: 13.5px; }
+  .list .ph { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  .pill { display: inline-flex; align-items: center; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; height: fit-content; }
+  .pill.done { color: var(--good-ink); background: var(--good-soft); }
+  .pill.doing { color: var(--warn-ink); background: var(--warn-soft); }
+  .pill.todo { color: var(--todo-ink); background: var(--todo-soft); }
+ 
+  /* Pipeline strip */
+  .pipe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 14px; }
+  .pipe a { text-decoration: none; font-size: 13px; font-weight: 600; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; }
+  .pipe a span { color: var(--muted); font-weight: 700; margin-right: 4px; font-variant-numeric: tabular-nums; }
+  .pipe .ar { color: var(--muted); }
+ 
+  /* Windows */
+  .desk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 900px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+  .win { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; scroll-margin-top: 12px; }
+  .win.wide { grid-column: 1 / -1; }
+  .win.min .wbody { display: none; }
+  .tbar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--card-2); border-bottom: 1px solid var(--border); user-select: none; }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--axis); }
+  .tbar .ttl { font-weight: 700; font-size: 13.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tbar .step { font-family: var(--mono); font-size: 11.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }
+  .tbar button { font: inherit; font-size: 13px; line-height: 1; width: 24px; height: 22px; border-radius: 5px; border: 1px solid var(--border); background: var(--card); color: var(--text-2); cursor: pointer; }
+  .wbody { padding: 10px 12px 12px; }
+  .wnote { font-size: 13px; color: var(--text-2); margin: 8px 0 0; }
+  .wnote b { color: var(--text); }
+  .lg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-2); margin-bottom: 4px; min-height: 18px; }
+  .lg span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 16px; height: 0; border-top: 2px solid; }
+  .sw.dash { border-top-style: dashed; }
+  .sw.dot { width: 8px; height: 8px; border-radius: 50%; border: none; }
+  .sw.band { width: 12px; height: 10px; border: none; border-radius: 2px; }
+  .plot { position: relative; width: 100%; }
+  .plot canvas { display: block; width: 100%; touch-action: pan-y; cursor: crosshair; }
+  .tip { position: absolute; top: 6px; pointer-events: none; background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(0,0,0,.12); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; line-height: 1.45; white-space: nowrap; display: none; z-index: 3; font-variant-numeric: tabular-nums; }
+  .tip .h { color: var(--muted); font-size: 11.5px; }
+  .tip .r { display: flex; align-items: center; gap: 6px; }
+  .tip .r b { margin-left: auto; padding-left: 12px; font-weight: 700; }
+ 
+  /* Controls */
+  .ctl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1000px) { .ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .ctl { grid-template-columns: minmax(0, 1fr); } }
+  fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0; padding: 8px 10px 10px; min-width: 0; }
+  legend { font-size: 12.5px; font-weight: 700; color: var(--text-2); padding: 0 4px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: center; font-size: 13px; margin-top: 4px; }
+  .row input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+  .row output { font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+  .chk { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 4px; }
+  .srcbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .srcbar select, .srcbar input[type=text] { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .status { font-size: 13px; color: var(--text-2); background: var(--card-2); border-radius: 8px; padding: 7px 10px; margin-bottom: 12px; }
+  .status b { color: var(--text); }
+  .drop { border: 1.5px dashed var(--axis); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .drop.over { border-color: var(--accent); color: var(--accent); }
+ 
+  table.m { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.m th, table.m td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
+  table.m th { font-size: 12px; color: var(--muted); font-weight: 600; border-top: none; }
+  table.m td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  table.m td.note { color: var(--muted); font-size: 12.5px; }
+  .tblwrap { overflow-x: auto; }
+ 
+  pre { background: var(--card-2); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; margin: 8px 0; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  .card code { overflow-wrap: anywhere; }
+  ul.issues { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 14px; }
+  ul.issues li { margin: 4px 0; }
+  ul.issues b { color: var(--text); }
+  .commits { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+  .commits li { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); }
+  .commits li:first-child { border-top: none; }
+  .commits .dt { color: var(--muted); font-variant-numeric: tabular-nums; }
+  footer { padding: 30px 0 44px; color: var(--muted); font-size: 13.5px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
 </head>
 <body>
-
-<div class="top wrap">
-  <div class="theme-btn"><button id="themeBtn" type="button" aria-label="Switch light or dark mode">🌓 Theme</button></div>
-</div>
-
+ 
 <header>
   <div class="wrap">
-    <span class="tag">Project dashboard</span>
-    <h1>📱 Smartphone Motion</h1>
+    <div class="theme-btn"><button class="btn sm" id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button></div>
+    <span class="tag">ESP32-S3 · phyphox · 2-DOF pan-tilt</span>
+    <h1>Pan-Tilt Motion Lab</h1>
     <p class="lede">
-      Move your phone, and a small camera stand moves the same way.
-      This page shows what is finished, what we are working on now, and what comes next.
+      A smartphone running phyphox streams Roll, Pitch and Yaw to an ESP32-S3, which turns them into Pan and Tilt servo angles.
+      This page tracks project progress and replays recorded motion through every data pre-processing step, one window per step.
     </p>
     <div class="btns">
-      <a class="btn primary" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">See the code on GitHub</a>
-      <a class="btn" href="#checklist">Progress checklist</a>
-      <a class="btn" href="#words">What do the words mean?</a>
+      <a class="btn primary" href="#workbench">Open the workbench</a>
+      <a class="btn" href="#progress">Progress</a>
+      <a class="btn" href="#record">How to record data</a>
+      <a class="btn" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub repo</a>
     </div>
   </div>
 </header>
-
+ 
 <main class="wrap">
-
-  <!-- ===== Overall progress ===== -->
-  <section aria-labelledby="overall">
-    <h2 id="overall" class="sr-only">Overall progress</h2>
-    <div class="card progress-card">
-      <div>
-        <div class="big-num"><span id="pct">0</span><small>%</small></div>
-        <div class="big-label">of the plan is done</div>
-      </div>
-      <div>
-        <div class="meter" id="meter" role="img" aria-label="Progress bar"></div>
-        <div class="legend" id="legend"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== Quick numbers ===== -->
-  <section aria-labelledby="numbers">
-    <h2 id="numbers">Quick numbers</h2>
-    <p class="sub">A fast look at the size of the project.</p>
-    <div class="grid g4">
-      <div class="card stat"><div class="n">5</div><div class="l">Python programs<br>(run on a computer)</div></div>
-      <div class="card stat"><div class="n">5</div><div class="l">ESP32 programs<br>(run on the small board)</div></div>
-      <div class="card stat"><div class="n" id="statCommits">31</div><div class="l">Saved changes<br>(commits)</div></div>
-      <div class="card stat"><div class="n" id="statLast">Sep 22</div><div class="l">Last update<br><span id="statLastYear">2026</span></div></div>
-    </div>
-  </section>
-
-  <!-- ===== How it works ===== -->
-  <section aria-labelledby="how">
-    <h2 id="how">How it works</h2>
-    <p class="sub">Three simple steps. No home Wi-Fi is needed.</p>
-    <div class="steps">
-      <div class="card step">
-        <div class="emoji">📱</div>
-        <h3>1. The phone feels the motion</h3>
-        <p>A free app called <a href="https://phyphox.org/" target="_blank" rel="noopener">Phyphox</a> reads how the phone is tilted and turned, and shares these numbers over Wi-Fi.</p>
-      </div>
-      <div class="arrow" aria-hidden="true">➜</div>
-      <div class="card step">
-        <div class="emoji">🧠</div>
-        <h3>2. A small board does the thinking</h3>
-        <p>An ESP32 board makes its own Wi-Fi, reads the phone's numbers, and smooths out small shakes.</p>
-      </div>
-      <div class="arrow" aria-hidden="true">➜</div>
-      <div class="card step">
-        <div class="emoji">🎥</div>
-        <h3>3. Two motors move the stand</h3>
-        <p>One motor turns the stand left and right. The other tilts it up and down. It follows your phone.</p>
-      </div>
-    </div>
-    <p class="sub" style="margin-top:12px">
-      You can also open a control web page on the board and move the stand with an on-screen joystick.
-      On a computer, Python programs show a 3D phone that moves just like the real one.
-    </p>
-  </section>
-
-  <!-- ===== Checklist ===== -->
-  <section id="checklist" aria-labelledby="checkh">
-    <h2 id="checkh">Progress checklist</h2>
-    <p class="sub">Every goal in the plan, and where it stands today.</p>
+ 
+<!-- ================= PROGRESS ================= -->
+<section id="progress" aria-labelledby="progh">
+  <h2 id="progh">Project progress</h2>
+  <p class="sub">Every goal in the plan, grouped by phase. Edit the <code>GOALS</code> list in this file to update it.</p>
+  <div class="prog">
     <div class="card">
-      <div class="filters" role="group" aria-label="Filter the list">
+      <div class="big"><div class="big-num"><span id="pct">0</span><small>%</small></div><div style="color:var(--text-2)">of the plan is done<br><small style="color:var(--muted)">in-progress items count as half</small></div></div>
+      <div class="meter" id="meter" role="img"></div>
+      <div class="legend-row" id="legend"></div>
+      <div class="phases" id="phases"></div>
+    </div>
+    <div class="card">
+      <div class="filters" role="group" aria-label="Filter goals">
         <button type="button" data-f="all" aria-pressed="true">All</button>
-        <button type="button" data-f="done" aria-pressed="false">✅ Done</button>
-        <button type="button" data-f="doing" aria-pressed="false">🔧 Working on it</button>
-        <button type="button" data-f="todo" aria-pressed="false">📝 Planned</button>
+        <button type="button" data-f="done" aria-pressed="false">Done</button>
+        <button type="button" data-f="doing" aria-pressed="false">In progress</button>
+        <button type="button" data-f="todo" aria-pressed="false">Planned</button>
       </div>
       <ul class="list" id="goalList"></ul>
     </div>
-  </section>
-
-  <!-- ===== Parts ===== -->
-  <section aria-labelledby="parts">
-    <h2 id="parts">What is in the project</h2>
-    <p class="sub">The project has two main parts. Click a file name to see it on GitHub.</p>
-    <div class="grid g2">
-      <div class="card part">
-        <h3>💻 Computer programs (Python) <span class="pill done">✅ Working</span></h3>
-        <p>These run on a laptop. They show a 3D phone on the screen that moves with your real phone.
-           They can also draw graphs and save the motion to a file.</p>
-        <ul class="files">
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/Kalman%20Filter/smMotionV2.py" target="_blank" rel="noopener">smMotionV2.py</a><span class="star">★ Best one to start with</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/Kalman%20Filter/smartphone_motionV2.py" target="_blank" rel="noopener">smartphone_motionV2.py</a><span>Older smoothing version</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/FFT/smartphone_motionV2_fft.py" target="_blank" rel="noopener">smartphone_motionV2_fft.py</a><span>Finds how fast you shake</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/FFT/smartphone_motionV1.py" target="_blank" rel="noopener">smartphone_motionV1.py</a><span>First, simple version</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/RPY/2DOF_motion.py" target="_blank" rel="noopener">2DOF_motion.py</a><span>Camera stand simulator</span></li>
-        </ul>
-      </div>
-      <div class="card part">
-        <h3>🔌 Board programs (ESP32) <span class="pill done">✅ Working</span></h3>
-        <p>These run on the ESP32 board and move the real motors.
-           The newest ones make their own Wi-Fi and have a control web page.</p>
-        <ul class="files">
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/AP%20Dashboard/esp32-smartphone-control-APkm.cpp" target="_blank" rel="noopener">esp32-smartphone-control-APkm.cpp</a><span class="star">★ Newest: own Wi-Fi + web page + smoothing</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/AP%20Dashboard/esp32-smartphone-control-AP.cpp" target="_blank" rel="noopener">esp32-smartphone-control-AP.cpp</a><span>Own Wi-Fi + web page</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/Kalman%20Filter/esp32-smartphone-control-kalman.cpp" target="_blank" rel="noopener">esp32-smartphone-control-kalman.cpp</a><span>Uses phone hotspot, strong smoothing</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/LPF/esp32-smartphone-control-2.cpp" target="_blank" rel="noopener">esp32-smartphone-control-2.cpp</a><span>Uses phone hotspot, soft smoothing</span></li>
-          <li><a href="https://github.com/CenterHaHaYo/Smartphone-motion/blob/main/on%20ESP32/LPF/esp32-smartphone-control.cpp" target="_blank" rel="noopener">esp32-smartphone-control.cpp</a><span>First board version</span></li>
-        </ul>
+  </div>
+</section>
+ 
+<!-- ================= WORKBENCH ================= -->
+<section id="workbench" aria-labelledby="wbh">
+  <h2 id="wbh">Data pre-processing workbench</h2>
+  <p class="sub">The same pipeline as <code>esp32-smartphone-control-APkm.cpp</code>, re-run in your browser. Change a setting and every window updates. Drag across any time chart to zoom; double-click to reset.</p>
+ 
+  <nav class="pipe" aria-label="Pipeline steps">
+    <a href="#w-raw"><span>0</span>Raw RPY</a><span class="ar">→</span>
+    <a href="#w-time"><span>1</span>Timing &amp; gaps</a><span class="ar">→</span>
+    <a href="#w-clean"><span>2</span>Unwrap + spikes</a><span class="ar">→</span>
+    <a href="#w-kf"><span>3</span>Kalman</a><span class="ar">→</span>
+    <a href="#w-db"><span>4</span>Dead-band</a><span class="ar">→</span>
+    <a href="#w-pan"><span>5</span>Map, clamp, rate-limit</a><span class="ar">→</span>
+    <a href="#w-ws"><span>6</span>Pan-tilt output</a><span class="ar">→</span>
+    <a href="#w-metrics"><span>7</span>Metrics</a>
+  </nav>
+ 
+  <div class="desk">
+ 
+    <!-- Control panel -->
+    <div class="win wide" id="w-ctl">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Control panel</span><span class="step">settings</span><button type="button" data-min aria-label="Minimize">–</button></div>
+      <div class="wbody">
+        <div class="srcbar">
+          <label for="demoRate" style="font-size:13px;font-weight:600">Data:</label>
+          <button class="btn sm" type="button" id="btnDemo">Demo recording</button>
+          <select id="demoRate" aria-label="Demo sample rate">
+            <option value="10">10 Hz (ESP32 poll rate)</option>
+            <option value="30">30 Hz (Python recorder)</option>
+          </select>
+          <label class="drop" id="drop" tabindex="0">📂 Drop a CSV here or click to choose
+            <input type="file" id="file" accept=".csv,.txt,text/csv" class="sr-only">
+          </label>
+          <input type="text" id="repoPath" value="data/latest.csv" aria-label="CSV path in the repo" style="width:170px">
+          <button class="btn sm" type="button" id="btnRepo">Load from repo</button>
+          <span style="flex:1"></span>
+          <label for="focus" style="font-size:13px;font-weight:600">Focus axis:</label>
+          <select id="focus"><option value="yaw">Yaw → Pan</option><option value="pitch">Pitch → Tilt</option><option value="roll">Roll</option></select>
+        </div>
+        <div class="srcbar" id="liveBar">
+          <span style="font-size:13px;font-weight:600">Live from ESP32-S3 (USB):</span>
+          <button class="btn sm primary" type="button" id="btnLive">🔴 Connect &amp; start</button>
+          <button class="btn sm" type="button" id="btnStop" disabled>■ Stop</button>
+          <label for="liveWin" style="font-size:13px">Show last</label>
+          <select id="liveWin"><option value="30">30 s</option><option value="60" selected>60 s</option><option value="120">120 s</option></select>
+          <button class="btn sm" type="button" id="btnSaveLive" disabled>⬇ Save live session CSV</button>
+          <span id="liveInfo" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+        <div class="status" id="status">Loading…</div>
+        <div class="srcbar">
+          <span style="font-size:13px;font-weight:600">Presets:</span>
+          <button class="btn sm" type="button" id="pFirm">Firmware (APkm) as-is</button>
+          <button class="btn sm" type="button" id="pRec">Recommended pre-processing</button>
+          <button class="btn sm" type="button" id="btnZoom">Reset zoom</button>
+          <button class="btn sm" type="button" id="btnExport">⬇ Export processed CSV</button>
+        </div>
+        <div class="ctl" id="ctl">
+          <fieldset><legend>1–2 · Cleaning</legend>
+            <label class="chk"><input type="checkbox" id="unwrap"> Unwrap yaw at ±180°</label>
+            <label class="chk"><input type="checkbox" id="hampel"> Remove spikes (Hampel filter)</label>
+            <div class="row"><label for="hk">Hampel window (past samples)</label><output id="hk_o"></output><input type="range" id="hk" min="1" max="10" step="1"></div>
+            <div class="row"><label for="hn">Spike threshold (× MAD σ)</label><output id="hn_o"></output><input type="range" id="hn" min="1.5" max="8" step="0.5"></div>
+            <div class="row"><label for="gap">Gap → filter reset (s)</label><output id="gap_o"></output><input type="range" id="gap" min="0.1" max="2" step="0.05"></div>
+          </fieldset>
+          <fieldset><legend>3 · Kalman (angle + rate)</legend>
+            <div class="row"><label for="qp">Q pan (yaw)</label><output id="qp_o"></output><input type="range" id="qp" min="-1" max="3.5" step="0.1"></div>
+            <div class="row"><label for="rp">R pan (yaw)</label><output id="rp_o"></output><input type="range" id="rp" min="-2" max="2" step="0.1"></div>
+            <div class="row"><label for="qt">Q tilt (pitch, roll)</label><output id="qt_o"></output><input type="range" id="qt" min="-1" max="3.5" step="0.1"></div>
+            <div class="row"><label for="rt">R tilt (pitch, roll)</label><output id="rt_o"></output><input type="range" id="rt" min="-2" max="2" step="0.1"></div>
+          </fieldset>
+          <fieldset><legend>4 · Dead-band &amp; input range</legend>
+            <div class="row"><label for="dbp">Pan dead-band (°)</label><output id="dbp_o"></output><input type="range" id="dbp" min="0" max="6" step="0.1"></div>
+            <div class="row"><label for="dbt">Tilt dead-band (°)</label><output id="dbt_o"></output><input type="range" id="dbt" min="0" max="8" step="0.1"></div>
+            <div class="row"><label for="yin">Yaw input ± (°)</label><output id="yin_o"></output><input type="range" id="yin" min="20" max="180" step="5"></div>
+            <div class="row"><label for="pin">Pitch input ± (°)</label><output id="pin_o"></output><input type="range" id="pin" min="10" max="90" step="5"></div>
+          </fieldset>
+          <fieldset><legend>5 · Servo limits &amp; rate</legend>
+            <div class="row"><label for="pmin">Pan min / max (°)</label><output id="pmin_o"></output><input type="range" id="pmin" min="0" max="85" step="1"><input type="range" id="pmax" min="95" max="180" step="1" aria-label="Pan max"></div>
+            <div class="row"><label for="tmin">Tilt min / max (°)</label><output id="tmin_o"></output><input type="range" id="tmin" min="0" max="85" step="1"><input type="range" id="tmax" min="95" max="180" step="1" aria-label="Tilt max"></div>
+            <div class="row"><label for="rlp">Rate limit pan / tilt (°/s)</label><output id="rlp_o"></output><input type="range" id="rlp" min="10" max="300" step="5"><input type="range" id="rlt" min="10" max="300" step="5" aria-label="Tilt rate limit"></div>
+          </fieldset>
+        </div>
       </div>
     </div>
-  </section>
-
-  <!-- ===== Activity ===== -->
-  <section aria-labelledby="activity">
-    <h2 id="activity">Activity</h2>
-    <p class="sub">How much work was saved to the project each month, and the latest changes.</p>
-    <div class="grid g2">
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:2px">Changes per month</div>
-        <div style="font-size:13px;color:var(--muted)">Number of commits (saved changes)</div>
-        <div class="chart" id="chart" role="img" aria-label="Bar chart of commits per month"></div>
-        <div class="xlabels" id="xlabels" aria-hidden="true"></div>
-        <p class="chart-note" id="chartNote">Tip: hover over a bar to see the number.</p>
-      </div>
-      <div class="card">
-        <div style="font-weight:700;margin-bottom:10px">Latest changes</div>
-        <ul class="updates" id="updates"></ul>
-      </div>
+ 
+    <!-- 0 Raw -->
+    <div class="win wide" id="w-raw">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Raw input from phyphox — Roll, Pitch, Yaw</span><span class="step">step 0</span><button type="button" data-min aria-label="Minimize">–</button></div>
+      <div class="wbody"><div class="lg" data-lg="raw"></div><div data-chart="raw"></div>
+        <p class="wnote">Angles in degrees exactly as received from <code>/get?pitch&amp;roll&amp;yaw</code>. Shaded areas are gaps where no sample arrived.</p></div>
     </div>
-  </section>
+ 
+    <!-- 1 Timing -->
+    <div class="win" id="w-time">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Sample timing — time between samples</span><span class="step">step 1</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="time"></div><div data-chart="time"></div>
+        <p class="wnote" id="n-time"></p></div>
+    </div>
+ 
+    <!-- 2 Clean -->
+    <div class="win" id="w-clean">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Unwrap + spike removal — <span data-axis>Yaw</span></span><span class="step">step 2</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="clean"></div><div data-chart="clean"></div>
+        <p class="wnote" id="n-clean"></p></div>
+    </div>
+ 
+    <!-- 3 Kalman -->
+    <div class="win" id="w-kf">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Kalman filter — <span data-axis>Yaw</span></span><span class="step">step 3</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="kf"></div><div data-chart="kf"></div>
+        <p class="wnote" id="n-kf"></p></div>
+    </div>
+ 
+    <!-- 4 Dead-band -->
+    <div class="win" id="w-db">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Dead-band hold — Yaw and Pitch</span><span class="step">step 4</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="db"></div><div data-chart="db"></div>
+        <p class="wnote" id="n-db"></p></div>
+    </div>
+ 
+    <!-- 5 Pan -->
+    <div class="win" id="w-pan">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Pan servo — target vs. command</span><span class="step">step 5</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="pan"></div><div data-chart="pan"></div>
+        <p class="wnote" id="n-pan"></p></div>
+    </div>
+ 
+    <!-- 5 Tilt -->
+    <div class="win" id="w-tilt">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Tilt servo — target vs. command</span><span class="step">step 5</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="tilt"></div><div data-chart="tilt"></div>
+        <p class="wnote" id="n-tilt"></p></div>
+    </div>
+ 
+    <!-- 6 Workspace -->
+    <div class="win" id="w-ws">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Pan-tilt workspace — where the camera pointed</span><span class="step">step 6</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="ws"></div><div data-chart="ws"></div>
+        <p class="wnote">Each point is one servo command (every 20 ms). The dashed box is the allowed range. Hover here to find the same moment in the other windows.</p></div>
+    </div>
+ 
+    <!-- 6b Spectrum -->
+    <div class="win" id="w-fft">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Frequency content (FFT) — <span data-axis>Yaw</span></span><span class="step">step 6</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
+      <div class="wbody"><div class="lg" data-lg="fft"></div><div data-chart="fft"></div>
+        <p class="wnote" id="n-fft"></p></div>
+    </div>
+ 
+    <!-- 7 Metrics -->
+    <div class="win wide" id="w-metrics">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Metrics — In file vs. my current settings</span><span class="step">step 7</span><button type="button" data-min aria-label="Minimize">–</button></div>
+      <div class="wbody"><div class="tblwrap"><table class="m" id="metrics"></table></div></div>
+    </div>
+  </div>
+</section>
+ 
 
-  <!-- ===== Problems ===== -->
-  <section aria-labelledby="probs">
-    <h2 id="probs">Known problems</h2>
-    <p class="sub">Things we found that still need fixing. None of them stop the project from working.</p>
+ 
+<!-- ================= ISSUES + ACTIVITY ================= -->
+<section aria-labelledby="issh">
+  <div class="two">
     <div class="card">
-      <ul class="problems">
-        <li><b>Saved file has a wrong column.</b> In <code>smMotionV2.py</code>, the "yaw" column in the saved file shows the "roll" numbers by mistake.</li>
-        <li><b>A math sign is wrong in an older program.</b> In <code>smartphone_motionV2.py</code>, one small math step uses the wrong sign.</li>
-        <li><b>The older program gets stuck at some angles.</b> The same older program acts strangely when the phone points straight up or down. The newer <code>smMotionV2.py</code> does not have this problem.</li>
-        <li><b>The older program gets slower over time.</b> Its graphs keep growing and use more and more memory.</li>
-        <li><b>Errors are hidden.</b> If the phone is not connected, the programs do not say why.</li>
-        <li><b>Settings are inside the code.</b> You must edit the code to change the phone's address.</li>
-      </ul>
+      <h2 style="margin-bottom:8px">Latest commits</h2>
+      <ul class="commits" id="commits"><li><span class="dt">—</span><span>Loading from GitHub…</span></li></ul>
     </div>
-  </section>
-
-  <!-- ===== Words ===== -->
-  <section id="words" aria-labelledby="wordsh">
-    <h2 id="wordsh">What do the words mean?</h2>
-    <p class="sub">A short guide to the words used in this project.</p>
-    <div class="card">
-      <dl class="words">
-        <div><dt>Roll</dt><dd>Tipping the phone to the left or right.</dd></div>
-        <div><dt>Pitch</dt><dd>Tilting the phone forward or backward.</dd></div>
-        <div><dt>Yaw</dt><dd>Turning the phone left or right, like a door.</dd></div>
-        <div><dt>Pan and tilt</dt><dd>Pan means turning the stand left and right. Tilt means moving it up and down.</dd></div>
-        <div><dt>Servo</dt><dd>A small motor that can turn to an exact angle.</dd></div>
-        <div><dt>ESP32</dt><dd>A small, cheap computer board with Wi-Fi built in.</dd></div>
-        <div><dt>Phyphox</dt><dd>A free phone app that reads the phone's sensors and shares the data.</dd></div>
-        <div><dt>Filter (smoothing)</dt><dd>Math that removes small shakes so the motion looks calm. "Kalman" and "low-pass" are two kinds.</dd></div>
-        <div><dt>FFT</dt><dd>Math that finds how many times per second something shakes.</dd></div>
-        <div><dt>Commit</dt><dd>One saved change to the project's code.</dd></div>
-      </dl>
-    </div>
-  </section>
-
-  <!-- ===== Diagram ===== -->
-  <section aria-labelledby="diag">
-    <h2 id="diag">Full system map</h2>
-    <p class="sub">For people who want all the details: how every piece connects.</p>
-    <div class="card">
-      <details class="diagram">
-        <summary>Show the full diagram</summary>
-        <img src="My%20Diagram.png" alt="Detailed diagram of how the phone, the Python programs and the ESP32 board connect" loading="lazy">
-      </details>
-    </div>
-  </section>
-
+  </div>
+</section>
+ 
 </main>
-
+ 
 <footer>
   <div class="wrap">
-    Smartphone Motion · Made with a phone, an ESP32 board and two small motors ·
-    <a href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub</a>
-    <br><span id="dataNote">Checklist last reviewed: September 2026.</span>
+    Pan-Tilt Motion Lab · ESP32-S3, phyphox and two servos ·
+    <a href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub</a> ·
+    No external libraries — charts are drawn with plain canvas.
   </div>
 </footer>
-
+ 
 <script>
 (function () {
-  var REPO = "CenterHaHaYo/Smartphone-motion";
-
-  /* ---------- Theme toggle (remembered only in this browser) ---------- */
-  var root = document.documentElement;
-  try { var saved = localStorage.getItem("sm-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
-  document.getElementById("themeBtn").addEventListener("click", function () {
-    var cur = root.getAttribute("data-theme");
-    if (!cur) cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    var next = cur === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    try { localStorage.setItem("sm-theme", next); } catch (e) {}
-  });
-
-  /* ---------- Goals: edit this list to update the dashboard ---------- */
-  // status: "done" | "doing" | "todo"
-  var GOALS = [
-    { s: "done",  t: "Read the phone's motion on a computer", d: "Python gets the tilt and turn numbers from the Phyphox app over Wi-Fi." },
-    { s: "done",  t: "Show a 3D phone that moves like the real one", d: "A 3D model on the screen copies every move of the phone." },
-    { s: "done",  t: "Smooth out small shakes", d: "A Kalman filter makes the numbers calm and steady." },
-    { s: "done",  t: "Find how fast the phone shakes", d: "FFT math shows the shaking speed on each axis." },
-    { s: "done",  t: "Save motion to a file", d: "One click records 10 seconds of motion into a CSV file." },
-    { s: "done",  t: "Simulate the camera stand on screen", d: "A 3D camera stand turns and tilts with the phone before we build the real one." },
-    { s: "done",  t: "Move real motors with the ESP32 board", d: "The board reads the phone and moves two servo motors smoothly." },
-    { s: "done",  t: "Board makes its own Wi-Fi + control web page", d: "No home router needed. The web page shows live numbers and has a joystick." },
-    { s: "done",  t: "Draw a full system map", d: "One diagram shows how every piece connects." },
-    { s: "doing", t: "Tune the motor limits", d: "Setting safe angles so the stand never hits its own frame." },
-    { s: "doing", t: "Build this progress dashboard", d: "A simple web page so anyone can follow the project." },
-    { s: "todo",  t: "Fix the known problems", d: "The wrong column in the saved file, the math sign, and the other items listed below." },
-    { s: "todo",  t: "Add photos and a demo video of the real stand", d: "So people can see it working." },
-    { s: "todo",  t: "Join the 5 Python programs into one", d: "One program with simple on/off options instead of five copies." },
-    { s: "todo",  t: "Easier setup", d: "Add a list of needed tools and find the phone on the network by itself." },
-    { s: "todo",  t: "Replay mode", d: "Play a saved motion file back through the 3D view." }
-  ];
-
-  var LABEL = { done: "✅ Done", doing: "🔧 Working on it", todo: "📝 Planned" };
-  var count = { done: 0, doing: 0, todo: 0 };
-  GOALS.forEach(function (g) { count[g.s]++; });
-  var total = GOALS.length;
-
-  // Overall %: done = full credit, in progress = half credit
-  var pct = Math.round(((count.done + count.doing * 0.5) / total) * 100);
-  document.getElementById("pct").textContent = pct;
-
-  var meter = document.getElementById("meter");
-  meter.setAttribute("aria-label", count.done + " done, " + count.doing + " in progress, " + count.todo + " planned, out of " + total + " goals");
-  meter.innerHTML =
-    '<span class="m-done" style="width:' + (count.done / total * 100) + '%"></span>' +
-    '<span class="m-doing" style="width:' + (count.doing / total * 100) + '%"></span>';
-  document.getElementById("legend").innerHTML =
-    '<span><i style="background:var(--good)"></i>' + count.done + ' done</span>' +
-    '<span><i style="background:var(--warn)"></i>' + count.doing + ' working on it</span>' +
-    '<span><i style="background:var(--card-2);outline:1px solid var(--border)"></i>' + count.todo + ' planned</span>' +
-    '<span style="color:var(--muted)">' + total + ' goals in total</span>';
-
-  var list = document.getElementById("goalList");
-  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function renderGoals(filter) {
-    list.innerHTML = GOALS.filter(function (g) { return filter === "all" || g.s === filter; }).map(function (g) {
-      return '<li><span class="t">' + esc(g.t) + '</span><span class="pill ' + g.s + '">' + LABEL[g.s] + '</span><span class="d">' + esc(g.d) + '</span></li>';
+"use strict";
+var REPO = "CenterHaHaYo/Smartphone-motion";
+var root = document.documentElement;
+function $(s, el) { return (el || document).querySelector(s); }
+function $$(s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); }
+function css(v) { return getComputedStyle(root).getPropertyValue(v).trim(); }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+ 
+/* ================= Theme ================= */
+try { var saved = localStorage.getItem("ptl-theme"); if (saved) root.setAttribute("data-theme", saved); } catch (e) {}
+$("#themeBtn").addEventListener("click", function () {
+  var cur = root.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  var next = cur === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("ptl-theme", next); } catch (e) {}
+  redraw();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { redraw(); });
+ 
+/* ================= Progress (edit this list) ================= */
+// s: "done" | "doing" | "todo"   p: phase
+var GOALS = [
+  { p: "Hardware & firmware", s: "done",  t: "Stream RPY from phyphox over Wi-Fi", d: "phyphox remote access serves /get?pitch&roll&yaw." },
+  { p: "Hardware & firmware", s: "done",  t: "ESP32-S3 drives pan and tilt servos", d: "Yaw → pan (GPIO 4), pitch → tilt (GPIO 6)." },
+  { p: "Hardware & firmware", s: "done",  t: "ESP32-S3 access point + web dashboard", d: "Own Wi-Fi, joystick page, AUTO and MANUAL modes." },
+  { p: "Hardware & firmware", s: "done",  t: "Kalman → dead-band → rate limiter on the board", d: "Pipeline in esp32-smartphone-control-APkm.cpp." },
+  { p: "Hardware & firmware", s: "doing", t: "Tune servo limits for the real frame", d: "Pan 15–165°, tilt 45–130° so the stand never hits itself." },
+  { p: "Hardware & firmware", s: "todo",  t: "Add yaw unwrap and spike rejection to the firmware", d: "Port the steps proven in the workbench back to C++." },
+  { p: "Visualization",       s: "done",  t: "3D phone model in Python (VPython)", d: "Quaternion-driven model follows the real phone." },
+  { p: "Visualization",       s: "done",  t: "2-DOF camera stand simulator", d: "2DOF_motion.py previews pan and tilt before hardware." },
+  { p: "Visualization",       s: "done",  t: "Full system diagram", d: "One picture of every connection." },
+  { p: "Visualization",       s: "doing", t: "Progress dashboard + pre-processing workbench", d: "This page." },
+  { p: "Visualization",       s: "todo",  t: "Photos and demo video of the real stand", d: "Show it working." },
+  { p: "Data pre-processing", s: "done",  t: "Kalman filter comparison in Python", d: "Raw vs. filtered graphs for each axis." },
+  { p: "Data pre-processing", s: "done",  t: "FFT to find shake frequency", d: "Rolling 128-sample window per axis." },
+  { p: "Data pre-processing", s: "done",  t: "Record motion to CSV", d: "10-second recording from the Python tool." },
+  { p: "Data pre-processing", s: "doing", t: "Browser replay of the firmware pipeline", d: "Timing, unwrap, Hampel, Kalman, dead-band, map, rate limit." },
+  { p: "Data pre-processing", s: "todo",  t: "Timestamped CSV logging on the ESP32-S3", d: "t_ms, roll, pitch, yaw, pan, tilt over Serial." },
+  { p: "Data pre-processing", s: "todo",  t: "Fix the yaw_deg column in smMotionV2.py", d: "It currently saves roll values." },
+  { p: "Data pre-processing", s: "todo",  t: "Pick filter settings from recorded sessions", d: "Compare lag vs. smoothness on several real recordings." },
+  { p: "Data pre-processing", s: "todo",  t: "Raise the poll rate or filter on the phone side", d: "Avoid aliasing hand tremor at 10 Hz." }
+];
+(function renderProgress() {
+  var LABEL = { done: "Done", doing: "In progress", todo: "Planned" };
+  var c = { done: 0, doing: 0, todo: 0 }; GOALS.forEach(function (g) { c[g.s]++; });
+  var n = GOALS.length;
+  $("#pct").textContent = Math.round((c.done + c.doing * 0.5) / n * 100);
+  var m = $("#meter");
+  m.setAttribute("aria-label", c.done + " done, " + c.doing + " in progress, " + c.todo + " planned of " + n);
+  m.innerHTML = '<span style="width:' + (c.done / n * 100) + '%;background:var(--good)"></span><span style="width:' + (c.doing / n * 100) + '%;background:var(--warn)"></span>';
+  $("#legend").innerHTML = '<span><i style="background:var(--good)"></i>' + c.done + ' done</span><span><i style="background:var(--warn)"></i>' + c.doing + ' in progress</span><span><i style="background:var(--bar-bg);outline:1px solid var(--border)"></i>' + c.todo + ' planned</span>';
+  var phases = []; GOALS.forEach(function (g) { if (phases.indexOf(g.p) < 0) phases.push(g.p); });
+  $("#phases").innerHTML = phases.map(function (p) {
+    var gs = GOALS.filter(function (g) { return g.p === p; });
+    var d = gs.filter(function (g) { return g.s === "done"; }).length;
+    var pc = Math.round((d + gs.filter(function (g) { return g.s === "doing"; }).length * 0.5) / gs.length * 100);
+    return '<div class="phase"><b>' + esc(p) + '</b><small>' + d + ' of ' + gs.length + ' done · ' + pc + '%</small><div class="pb"><span style="width:' + pc + '%"></span></div></div>';
+  }).join("");
+  function list(f) {
+    $("#goalList").innerHTML = GOALS.filter(function (g) { return f === "all" || g.s === f; }).map(function (g) {
+      return '<li><span class="t">' + esc(g.t) + '<span class="ph">' + esc(g.p) + '</span></span><span class="pill ' + g.s + '">' + LABEL[g.s] + '</span><span class="d">' + esc(g.d) + '</span></li>';
     }).join("");
   }
-  renderGoals("all");
-  document.querySelectorAll(".filters button").forEach(function (b) {
+  list("all");
+  $$(".filters button").forEach(function (b) {
     b.addEventListener("click", function () {
-      document.querySelectorAll(".filters button").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
-      b.setAttribute("aria-pressed", "true");
-      renderGoals(b.getAttribute("data-f"));
+      $$(".filters button").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true"); list(b.getAttribute("data-f"));
     });
   });
-
-  /* ---------- Activity (built-in data; refreshed live from GitHub when possible) ---------- */
-  var FALLBACK = [
-    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Removed old build setup files" },
-    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Added a project progress web page" },
-    { date: "2026-09-22", who: "Poohdis", msg: "Added the full system diagram" },
-    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Board now makes its own Wi-Fi with a control web page" },
-    { date: "2026-09-22", who: "CenterHaHaYo", msg: "Added Kalman smoothing to the board program" },
-    { date: "2026-09-21", who: "CenterHaHaYo", msg: "First board program that moves the motors" },
-    { date: "2026-09-21", who: "Poohdis", msg: "Rewrote the project guide (README)" }
+})();
+ 
+/* ================= Commits (public GitHub API, read-only) ================= */
+var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+fetch("https://api.github.com/repos/" + REPO + "/commits?per_page=6")
+  .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+  .then(function (d) {
+    $("#commits").innerHTML = d.map(function (c) {
+      var dt = new Date(c.commit.author.date);
+      return '<li><span class="dt">' + MON[dt.getMonth()] + " " + dt.getDate() + '</span><span>' + esc((c.commit.message || "").split("\n")[0]) + '</span></li>';
+    }).join("");
+  })
+  .catch(function () { $("#commits").innerHTML = '<li><span class="dt">—</span><span>Could not reach GitHub. See the repo for history.</span></li>'; });
+ 
+/* ================= Parameters ================= */
+var PRESETS = {
+  firmware: { unwrap: false, hampel: false, hk: 3, hn: 3, gap: 0.5, qp: 2, rp: 0, qt: 2, rt: 0, dbp: 1.5, dbt: 3, yin: 90, pin: 60, pmin: 15, pmax: 165, tmin: 45, tmax: 130, rlp: 60, rlt: 40 },
+  recommended: { unwrap: true, hampel: true, hk: 3, hn: 3, gap: 0.5, qp: 2, rp: 0, qt: 2, rt: 0, dbp: 1.5, dbt: 3, yin: 90, pin: 60, pmin: 15, pmax: 165, tmin: 45, tmax: 130, rlp: 60, rlt: 40 }
+};
+// qp/rp/qt/rt are log10 values (2 → Q = 100, 0 → R = 1, same as firmware)
+var KEYS = Object.keys(PRESETS.firmware);
+function fmtLog(v) { var x = Math.pow(10, v); return x >= 10 ? x.toFixed(0) : x >= 1 ? x.toFixed(1) : x.toFixed(2); }
+function readParams() {
+  var P = {};
+  KEYS.forEach(function (k) { var el = $("#" + k); P[k] = el.type === "checkbox" ? el.checked : +el.value; });
+  return P;
+}
+function toModel(P) {
+  return {
+    unwrap: P.unwrap, hampel: P.hampel, hk: P.hk, hn: P.hn, gap: P.gap,
+    Qp: Math.pow(10, P.qp), Rp: Math.pow(10, P.rp), Qt: Math.pow(10, P.qt), Rt: Math.pow(10, P.rt),
+    dbp: P.dbp, dbt: P.dbt, yin: P.yin, pin: P.pin,
+    pmin: P.pmin, pmax: P.pmax, tmin: P.tmin, tmax: P.tmax, rlp: P.rlp, rlt: P.rlt
+  };
+}
+function showOutputs() {
+  var P = readParams();
+  $("#hk_o").textContent = 2 * P.hk + 1; $("#hn_o").textContent = P.hn.toFixed(1); $("#gap_o").textContent = P.gap.toFixed(2);
+  $("#qp_o").textContent = fmtLog(P.qp); $("#rp_o").textContent = fmtLog(P.rp);
+  $("#qt_o").textContent = fmtLog(P.qt); $("#rt_o").textContent = fmtLog(P.rt);
+  $("#dbp_o").textContent = P.dbp.toFixed(1); $("#dbt_o").textContent = P.dbt.toFixed(1);
+  $("#yin_o").textContent = "±" + P.yin; $("#pin_o").textContent = "±" + P.pin;
+  $("#pmin_o").textContent = P.pmin + " / " + P.pmax; $("#tmin_o").textContent = P.tmin + " / " + P.tmax;
+  $("#rlp_o").textContent = P.rlp + " / " + P.rlt;
+  $("#hk").disabled = $("#hn").disabled = !P.hampel;
+}
+function applyPreset(p) {
+  KEYS.forEach(function (k) { var el = $("#" + k); if (el.type === "checkbox") el.checked = p[k]; else el.value = p[k]; });
+  showOutputs(); run();
+}
+KEYS.forEach(function (k) { $("#" + k).addEventListener("input", function () { showOutputs(); scheduleRun(); }); });
+$("#pFirm").addEventListener("click", function () { applyPreset(PRESETS.firmware); });
+$("#pRec").addEventListener("click", function () { applyPreset(PRESETS.recommended); });
+ 
+/* ================= Data ================= */
+var DATA = null, SOURCE = "";
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function wrap180(a) { a = ((a + 180) % 360 + 360) % 360 - 180; return a; }
+function smooth01(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+ 
+function makeDemo(fs) {
+  var r = rng(20260923), gauss = function () { return Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(2 * Math.PI * r()); };
+  var T = 60, t = 0, out = { t: [], roll: [], pitch: [], yaw: [] };
+  function yawTrue(t) {
+    if (t < 8) return 0;
+    if (t < 20) return 60 * Math.sin(2 * Math.PI * 0.08 * (t - 8));
+    if (t < 26) return -40 * smooth01((t - 20) / 0.6) + (60 * Math.sin(2 * Math.PI * 0.08 * 12)) * (1 - smooth01((t - 20) / 0.6));
+    if (t < 40) return -40 + 110 * smooth01((t - 26) / 14);
+    if (t < 50) return 70;
+    return 70 + 130 * smooth01((t - 50) / 8);            // passes 180° → wraps to negative
+  }
+  function pitchTrue(t) {
+    if (t < 10) return 2;
+    if (t < 30) return 20 * Math.sin(2 * Math.PI * 0.12 * (t - 10));
+    if (t < 37) return 35 * smooth01((t - 30) / 0.5);
+    if (t < 45) return 35 - 60 * smooth01((t - 37) / 0.5);
+    return -25 + 15 * smooth01((t - 45) / 3);
+  }
+  var spikes = {}; for (var k = 0; k < 7; k++) spikes[Math.floor(r() * T * fs)] = (r() < 0.5 ? -1 : 1) * (25 + 20 * r());
+  var i = 0;
+  while (t < T) {
+    if (!(t > 31 && t < 31.9)) {                           // dropped packets
+      var trem = (t > 40 && t < 50) ? 1.6 : 0.5;
+      var tr = trem * Math.sin(2 * Math.PI * 8.1 * t);        // 8 Hz hand tremor
+      var y = yawTrue(t) + tr + gauss() * 0.6;
+      var p = pitchTrue(t) + tr * 0.8 + gauss() * 0.6;
+      var ro = 12 * Math.sin(2 * Math.PI * 0.05 * t) + tr * 0.5 + gauss() * 0.5;
+      if (spikes[i]) { if (i % 3 === 0) p += spikes[i]; else y += spikes[i]; }
+      out.t.push(+t.toFixed(3)); out.roll.push(+wrap180(ro).toFixed(3)); out.pitch.push(+p.toFixed(3)); out.yaw.push(+wrap180(y).toFixed(3));
+    }
+    i++;
+    var dt = 1 / fs * (1 + 0.12 * gauss());
+    if (r() < 0.03) dt += 0.04 + 0.08 * r();                // late HTTP replies
+    t += Math.max(0.2 / fs, dt);
+  }
+  return out;
+}
+ 
+function parseCSV(text) {
+  var lines = text.replace(/\r/g, "").split("\n").filter(function (l) { return l.trim().length; });
+  if (lines.length < 3) throw new Error("File has fewer than 3 lines.");
+  var first = lines[0], delim = [",", ";", "\t"].sort(function (a, b) { return first.split(b).length - first.split(a).length; })[0];
+  var head = first.split(delim).map(function (h) { return h.trim().replace(/^"|"$/g, "").toLowerCase(); });
+  function find(tests) { for (var i = 0; i < tests.length; i++) for (var j = 0; j < head.length; j++) if (tests[i].test(head[j])) return j; return -1; }
+  var ci = {
+    t: find([/^t_ms$/, /^time_s$/, /^time \(s\)$/, /^(t|time|timestamp|millis|ms)$/, /time/]),
+    roll: find([/raw_?roll/, /^roll/, /roll/]), pitch: find([/raw_?pitch/, /^pitch/, /^(?!kf).*pitch/]), yaw: find([/raw_?yaw/, /^yaw/, /^(?!kf).*yaw/]),
+    pan: find([/^pan$/, /^pan_?(deg|cmd|angle|servo)$/, /^(?!.*target).*pan/]), tilt: find([/^tilt$/, /^tilt_?(deg|cmd|angle|servo)$/, /^(?!.*target).*tilt/]),
+    kfy: find([/^kf_?yaw/]), kfp: find([/^kf_?pitch/])
+  };
+  if (ci.roll < 0 && ci.pitch < 0 && ci.yaw < 0) throw new Error("No roll, pitch or yaw column found. Header: " + first);
+  var d = { t: [], roll: [], pitch: [], yaw: [], pan: ci.pan >= 0 ? [] : null, tilt: ci.tilt >= 0 ? [] : null,
+            kfy: ci.kfy >= 0 ? [] : null, kfp: ci.kfp >= 0 ? [] : null, dropped: 0 };
+  for (var i = 1; i < lines.length; i++) {
+    var c = lines[i].split(delim).map(function (x) { return parseFloat(x.replace(/^"|"$/g, "")); });
+    var get = function (k) { return ci[k] >= 0 ? c[ci[k]] : 0; };
+    var tv = ci.t >= 0 ? c[ci.t] : (i - 1) * 0.1;
+    var vals = [tv, get("roll"), get("pitch"), get("yaw")];
+    if (vals.some(function (v) { return !isFinite(v); })) { d.dropped++; continue; }
+    d.t.push(tv); d.roll.push(vals[1]); d.pitch.push(vals[2]); d.yaw.push(vals[3]);
+    if (d.pan) d.pan.push(get("pan")); if (d.tilt) d.tilt.push(get("tilt"));
+    if (d.kfy) d.kfy.push(get("kfy")); if (d.kfp) d.kfp.push(get("kfp"));
+  }
+  var isMs = ci.t >= 0 && (/ms|millis/.test(head[ci.t]) || (d.t.length > 2 && (d.t[d.t.length - 1] - d.t[0]) / (d.t.length - 1) > 5));
+  if (isMs) d.t = d.t.map(function (v) { return v / 1000; });
+  if (ci.t < 0) d.noTime = true;
+  d.cols = ["roll", "pitch", "yaw", "pan", "tilt", "kfy", "kfp"].filter(function (k) { return ci[k] >= 0; }).map(function (k) { return k + "←" + head[ci[k]]; });
+  return d;
+}
+ 
+/* ================= Pipeline (mirrors esp32-smartphone-control-APkm.cpp) ================= */
+function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+ 
+function prep(raw) {
+  // sort by time, drop duplicate timestamps
+  var idx = raw.t.map(function (_, i) { return i; }).sort(function (a, b) { return raw.t[a] - raw.t[b]; });
+  var o = { t: [], roll: [], pitch: [], yaw: [], pan: raw.pan ? [] : null, tilt: raw.tilt ? [] : null,
+            kfy: raw.kfy ? [] : null, kfp: raw.kfp ? [] : null, dropped: raw.dropped || 0, dup: 0 };
+  var t0 = raw.keepTime ? 0 : raw.t[idx[0]], last = -Infinity;   // live mode keeps session time on the x-axis
+  idx.forEach(function (i) {
+    var tt = raw.t[i] - t0;
+    if (tt <= last) { o.dup++; return; }
+    last = tt; o.t.push(tt); o.roll.push(raw.roll[i]); o.pitch.push(raw.pitch[i]); o.yaw.push(raw.yaw[i]);
+    if (o.pan) o.pan.push(raw.pan[i]); if (o.tilt) o.tilt.push(raw.tilt[i]);
+    if (o.kfy) o.kfy.push(raw.kfy[i]); if (o.kfp) o.kfp.push(raw.kfp[i]);
+  });
+  return o;
+}
+ 
+function unwrap(a) {
+  var out = [a[0]], off = 0, jumps = 0;
+  for (var i = 1; i < a.length; i++) {
+    var d = a[i] - a[i - 1];
+    if (d > 180) { off -= 360; jumps++; } else if (d < -180) { off += 360; jumps++; }
+    out.push(a[i] + off);
+  }
+  return { v: out, jumps: jumps };
+}
+ 
+function hampel(a, k, n) {
+  var out = a.slice(), flags = [];
+  for (var i = 0; i < a.length; i++) {
+    // Causal (trailing) window: only past samples + current, so the same code can run on the ESP32 in real time
+    var lo = Math.max(0, i - 2 * k), hi = i + 1, w = a.slice(lo, hi), med = median(w);
+    if (w.length < 3) continue;
+    var mad = median(w.map(function (x) { return Math.abs(x - med); }));
+    var sigma = Math.max(1.4826 * mad, 1.5);             // 1.5° floor so flat or slowly moving segments are not flagged
+    if (Math.abs(a[i] - med) > n * sigma) { out[i] = med; flags.push(i); }
+  }
+  return { v: out, flags: flags };
+}
+ 
+function kalman(z, t, seg, q, r) {
+  var out = new Array(z.length), kf = null;
+  for (var i = 0; i < z.length; i++) {
+    if (!kf || seg[i]) { kf = { a: z[i], v: 0, P00: r, P01: 0, P10: 0, P11: 100 }; out[i] = kf.a; continue; }
+    var dt = Math.max(0.001, t[i] - t[i - 1]), dt2 = dt * dt, dt3 = dt2 * dt;
+    kf.a += kf.v * dt;
+    var p00 = kf.P00 + dt * (kf.P10 + kf.P01) + dt2 * kf.P11 + q * dt3 / 3;
+    var p01 = kf.P01 + dt * kf.P11 + q * dt2 / 2;
+    var p10 = kf.P10 + dt * kf.P11 + q * dt2 / 2;
+    var p11 = kf.P11 + q * dt;
+    var s = p00 + r, k0 = p00 / s, k1 = p10 / s, y = z[i] - kf.a;
+    kf.a += k0 * y; kf.v += k1 * y;
+    kf.P00 = p00 - k0 * p00; kf.P01 = p01 - k0 * p01; kf.P10 = p10 - k1 * p00; kf.P11 = p11 - k1 * p01;
+    out[i] = kf.a;
+  }
+  return out;
+}
+ 
+function deadband(a, th) { var held = 0, out = []; for (var i = 0; i < a.length; i++) { if (Math.abs(a[i] - held) >= th) held = a[i]; out.push(held); } return out; }
+function mapClamp(x, inMin, inMax, outMin, outMax) { var v = outMin + (x - inMin) / (inMax - inMin) * (outMax - outMin); return Math.max(outMin, Math.min(outMax, v)); }
+ 
+function process(d, M) {
+  var n = d.t.length, res = { n: n };
+  res.dt = d.t.map(function (v, i) { return i ? (v - d.t[i - 1]) * 1000 : NaN; });
+  res.seg = d.t.map(function (v, i) { return i === 0 || v - d.t[i - 1] > M.gap; });
+  res.gaps = [];
+  for (var i = 1; i < n; i++) if (d.t[i] - d.t[i - 1] > M.gap) res.gaps.push([d.t[i - 1], d.t[i]]);
+  var yaw = d.yaw, jumps = 0;
+  if (M.unwrap) { var u = unwrap(yaw); yaw = u.v; jumps = u.jumps; }
+  res.jumps = jumps;
+  res.clean = {}; res.spikes = {}; res.kf = {};
+  ["roll", "pitch", "yaw"].forEach(function (ax) {
+    var src = ax === "yaw" ? yaw : d[ax];
+    if (M.hampel) { var h = hampel(src, M.hk, M.hn); res.clean[ax] = h.v; res.spikes[ax] = h.flags; }
+    else { res.clean[ax] = src.slice(); res.spikes[ax] = []; }
+    var q = ax === "yaw" ? M.Qp : M.Qt, r = ax === "yaw" ? M.Rp : M.Rt;
+    res.kf[ax] = kalman(res.clean[ax], d.t, res.seg, q, r);
+  });
+  res.heldYaw = deadband(res.kf.yaw, M.dbp);
+  res.heldPitch = deadband(res.kf.pitch, M.dbt);
+  res.panTarget = res.heldYaw.map(function (x) { return mapClamp(x, -M.yin, M.yin, M.pmin, M.pmax); });
+  res.tiltTarget = res.heldPitch.map(function (x) { return mapClamp(x, -M.pin, M.pin, M.tmin, M.tmax); });
+  res.panRawMap = res.clean.yaw.map(function (x) { return mapClamp(x, -M.yin, M.yin, M.pmin, M.pmax); });
+  // Servo loop: every 20 ms, rate-limit toward the latest target, write rounded integers
+  var st = [], sp = [], stl = [], cp = 90, ct = 90, j = -1, tEnd = d.t[n - 1], writes = 0, lp = 90, lt = 90;
+  var panAtSample = new Array(n), tiltAtSample = new Array(n);
+  var tgP = 90, tgT = 90;
+  for (var tk = d.t[0]; tk <= tEnd + 1e-9; tk += 0.02) {
+    while (j + 1 < n && d.t[j + 1] <= tk) { j++; tgP = res.panTarget[j]; tgT = res.tiltTarget[j]; }
+    var dtk = 0.02;
+    cp += Math.max(-M.rlp * dtk, Math.min(M.rlp * dtk, tgP - cp));
+    ct += Math.max(-M.rlt * dtk, Math.min(M.rlt * dtk, tgT - ct));
+    var wp = Math.max(M.pmin, Math.min(M.pmax, Math.round(cp))), wt = Math.max(M.tmin, Math.min(M.tmax, Math.round(ct)));
+    if (wp !== lp || wt !== lt) { writes++; lp = wp; lt = wt; }
+    st.push(tk); sp.push(wp); stl.push(wt);
+  }
+  // command at each sample time
+  var k = 0;
+  for (i = 0; i < n; i++) { while (k + 1 < st.length && st[k + 1] <= d.t[i]) k++; panAtSample[i] = sp[k]; tiltAtSample[i] = stl[k]; }
+  res.servo = { t: st, pan: sp, tilt: stl, writes: writes };
+  res.panAtSample = panAtSample; res.tiltAtSample = tiltAtSample;
+  return res;
+}
+ 
+/* ================= Metrics ================= */
+function mean(a) { var s = 0, c = 0; a.forEach(function (v) { if (isFinite(v)) { s += v; c++; } }); return c ? s / c : NaN; }
+function std(a) { var m = mean(a), s = 0, c = 0; a.forEach(function (v) { if (isFinite(v)) { s += (v - m) * (v - m); c++; } }); return c > 1 ? Math.sqrt(s / (c - 1)) : NaN; }
+// Robust roughness: median |2nd difference|. One wrap jump or spike does not dominate it.
+function rough(a) { var v = []; for (var i = 2; i < a.length; i++) v.push(Math.abs(a[i] - 2 * a[i - 1] + a[i - 2])); return median(v); }
+// Delay (ms) that best aligns sig with ref: compares sig(t) with ref(t - tau), tau = 0..1500 ms in 5 ms steps (linear interpolation).
+function lagMs(t, ref, sig) {
+  var best = 0, bestE = Infinity;
+  for (var tau = 0; tau <= 1.5; tau += 0.005) {
+    var e = 0, c = 0, k = 0;
+    for (var i = 0; i < t.length; i++) {
+      var tt = t[i] - tau; if (tt < t[0]) continue;
+      while (k + 1 < t.length && t[k + 1] <= tt) k++;
+      var r = k + 1 < t.length ? ref[k] + (ref[k + 1] - ref[k]) * (tt - t[k]) / (t[k + 1] - t[k]) : ref[k];
+      var d = sig[i] - r; e += d * d; c++;
+    }
+    e /= c; if (e < bestE - 1e-9) { bestE = e; best = tau; }
+  }
+  return best * 1000;
+}
+function metrics(d, R) {
+  var dur = d.t[d.t.length - 1] - d.t[0], mdt = mean(R.dt);
+  var atLim = function (a, lo, hi) { return a.filter(function (v) { return v <= lo || v >= hi; }).length / a.length * 100; };
+  var slams = 0; for (var i = 1; i < R.panTarget.length; i++) if (Math.abs(R.panTarget[i] - R.panTarget[i - 1]) > 90) slams++;
+  var m = {
+    samples: d.t.length, dur: dur, rate: 1000 / mdt, jitter: std(R.dt), gaps: R.gaps.length, jumps: R.jumps,
+    spikes: R.spikes.roll.length + R.spikes.pitch.length + R.spikes.yaw.length,
+    // Same baseline for both columns: raw yaw unwrapped, so the wrap jump does not count as "noise"
+    yawRough: (1 - rough(R.kf.yaw) / rough(d.yaw)) * 100, pitchRough: (1 - rough(R.kf.pitch) / rough(d.pitch)) * 100,
+    lagYaw: lagMs(d.t, R.clean.yaw, R.kf.yaw),
+    lagPan: lagMs(d.t, unwrap(d.yaw).v.map(function (x) { return mapClamp(x, -R._M.yin, R._M.yin, R._M.pmin, R._M.pmax); }), R.panAtSample),
+    slams: slams, writes: R.servo.writes / dur,
+    panLim: atLim(R.servo.pan, R._M.pmin, R._M.pmax), tiltLim: atLim(R.servo.tilt, R._M.tmin, R._M.tmax)
+  };
+  if (d.pan) { var e = 0; for (i = 0; i < d.pan.length; i++) e += Math.pow(d.pan[i] - R.panAtSample[i], 2); m.rmsePan = Math.sqrt(e / d.pan.length); }
+  if (d.tilt) { e = 0; for (i = 0; i < d.tilt.length; i++) e += Math.pow(d.tilt[i] - R.tiltAtSample[i], 2); m.rmseTilt = Math.sqrt(e / d.tilt.length); }
+  return m;
+}
+ 
+/* ================= FFT ================= */
+function fft(re, im) {
+  var n = re.length;
+  for (var i = 1, j = 0; i < n; i++) { var bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { var t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+  for (var len = 2; len <= n; len <<= 1) {
+    var ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (i = 0; i < n; i += len) { var cr = 1, ci = 0;
+      for (j = 0; j < len / 2; j++) {
+        var ar = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, ai = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr;
+        re[i + j + len / 2] = re[i + j] - ar; im[i + j + len / 2] = im[i + j] - ai; re[i + j] += ar; im[i + j] += ai;
+        var nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } }
+  }
+}
+function spectrum(t, a) {
+  var fs = 1 / mean(t.map(function (v, i) { return i ? v - t[i - 1] : NaN; })), T = t[t.length - 1], T0 = t[0];
+  var N = 1; while (N * 2 <= Math.min(4096, Math.floor((T - T0) * fs))) N *= 2;
+  var re = new Array(N), im = new Array(N).fill(0), k = 0, dtu = 1 / fs, start = T - N * dtu;
+  for (var i = 0; i < N; i++) {                           // uniform resample (linear), last N/fs seconds
+    var tt = Math.max(T0, start) + i * dtu; while (k + 1 < t.length && t[k + 1] < tt) k++;
+    var f = k + 1 < t.length ? (tt - t[k]) / (t[k + 1] - t[k]) : 0; re[i] = a[k] + (a[Math.min(k + 1, a.length - 1)] - a[k]) * Math.max(0, Math.min(1, f));
+  }
+  var m = mean(re); for (i = 0; i < N; i++) re[i] = (re[i] - m) * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1)));
+  fft(re, im);
+  var fx = [], db = [];
+  for (i = 1; i < N / 2; i++) { fx.push(i * fs / N); db.push(20 * Math.log10(Math.sqrt(re[i] * re[i] + im[i] * im[i]) / N + 1e-6)); }
+  return { f: fx, db: db, fs: fs };
+}
+ 
+/* ================= Canvas chart ================= */
+var CHARTS = [], VIEW = null, FULL = [0, 1], HOVER = null, BANDS = [], drawQueued = false;
+function redraw() { if (drawQueued) return; drawQueued = true; requestAnimationFrame(function () { drawQueued = false; CHARTS.forEach(function (c) { c.draw(); }); }); }
+function niceTicks(lo, hi, n) {
+  var span = hi - lo || 1, s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), f = s0 / mag;
+  var step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = [];
+  for (var v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(8));
+  return out;
+}
+function nearest(xs, x) { var lo = 0, hi = xs.length - 1; while (hi - lo > 1) { var m = (lo + hi) >> 1; if (xs[m] < x) lo = m; else hi = m; } return Math.abs(xs[lo] - x) <= Math.abs(xs[hi] - x) ? lo : hi; }
+function fmt(v, d) { return isFinite(v) ? v.toFixed(d == null ? 1 : d) : "–"; }
+ 
+function Chart(host, cfg) {
+  this.cfg = cfg; this.host = host; host.classList.add("plot");
+  this.cv = document.createElement("canvas"); this.tip = document.createElement("div"); this.tip.className = "tip";
+  this.cv.setAttribute("role", "img"); this.cv.setAttribute("aria-label", cfg.label || "chart");
+  host.appendChild(this.cv); host.appendChild(this.tip);
+  this.series = []; this.refs = []; this.drag = null; this.localHover = null;
+  var self = this;
+  this.cv.addEventListener("pointermove", function (e) { self.onMove(e); });
+  this.cv.addEventListener("pointerleave", function () { if (self.cfg.type === "freq") { self.localHover = null; self.draw(); } else { HOVER = null; redraw(); } });
+  this.cv.addEventListener("pointerdown", function (e) { if (self.cfg.type === "time" && e.pointerType === "mouse" && e.button === 0) { self.drag = { x0: self.px(e), x1: self.px(e) }; self.cv.setPointerCapture(e.pointerId); } });
+  this.cv.addEventListener("pointerup", function () {
+    if (self.drag) { var a = Math.min(self.drag.x0, self.drag.x1), b = Math.max(self.drag.x0, self.drag.x1);
+      if (b - a > 8) VIEW = [self.x2v(a), self.x2v(b)]; self.drag = null; redraw(); }
+  });
+  this.cv.addEventListener("dblclick", function () { if (self.cfg.type === "time") { VIEW = null; redraw(); } });
+  if (window.ResizeObserver) new ResizeObserver(function () { redraw(); }).observe(host);
+  CHARTS.push(this);
+}
+Chart.prototype.px = function (e) { var r = this.cv.getBoundingClientRect(); return e.clientX - r.left; };
+Chart.prototype.x2v = function (x) { var g = this.g; return g.x0 + (x - g.L) / g.pw * (g.x1 - g.x0); };
+Chart.prototype.onMove = function (e) {
+  if (!this.g) return;
+  var x = this.px(e), g = this.g;
+  if (this.cfg.type === "time") {
+    if (this.drag) this.drag.x1 = x;
+    HOVER = Math.max(g.x0, Math.min(g.x1, this.x2v(x))); redraw();
+  } else if (this.cfg.type === "xy") {
+    var r = this.cv.getBoundingClientRect(), y = e.clientY - r.top, s = this.series[0]; if (!s) return;
+    var best = -1, bd = 400;
+    for (var i = 0; i < s.x.length; i += 2) { var dx = g.sx(s.x[i]) - x, dy = g.sy(s.y[i]) - y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = i; } }
+    HOVER = best >= 0 ? s.t[best] : null; redraw();
+  } else { this.localHover = this.x2v(x); this.draw(); }
+};
+Chart.prototype.set = function (series, refs, lgEl) {
+  this.series = series; this.refs = refs || [];
+  if (lgEl) lgEl.innerHTML = series.filter(function (s) { return !s.noLegend; }).map(function (s) {
+    var col = css(s.color), cls = s.kind === "dots" ? "sw dot" : s.dash ? "sw dash" : "sw";
+    var st = s.kind === "dots" ? "background:" + col : "border-top-color:" + col + (s.alpha ? ";opacity:" + s.alpha : "");
+    return '<span><i class="' + cls + '" style="' + st + '"></i>' + esc(s.name) + '</span>';
+  }).join("") + (this.cfg.type === "time" && BANDS.length ? '<span><i class="sw band" style="background:' + css("--band") + ';outline:1px solid ' + css("--warn") + '"></i>Gap</span>' : "");
+  this.draw();
+};
+Chart.prototype.draw = function () {
+  var cfg = this.cfg, cv = this.cv, W = this.host.clientWidth, H = cfg.h || 220;
+  if (!W) return;
+  var dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + "px"; }
+  var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  var L = 46, R = 12, T = 10, B = 24, pw = W - L - R, ph = H - T - B;
+  var x0, x1, y0, y1, self = this;
+  if (cfg.type === "time") { var v = VIEW || FULL; x0 = v[0]; x1 = v[1]; }
+  else if (cfg.xdom) { x0 = cfg.xdom[0]; x1 = cfg.xdom[1]; }
+  else { x0 = Infinity; x1 = -Infinity; this.series.forEach(function (s) { s.x.forEach(function (q) { if (q < x0) x0 = q; if (q > x1) x1 = q; }); }); }
+  if (cfg.ydom) { y0 = cfg.ydom[0]; y1 = cfg.ydom[1]; }
+  else {
+    y0 = Infinity; y1 = -Infinity;
+    this.series.forEach(function (s) { for (var i = 0; i < s.x.length; i++) if (s.x[i] >= x0 && s.x[i] <= x1 && isFinite(s.y[i])) { if (s.y[i] < y0) y0 = s.y[i]; if (s.y[i] > y1) y1 = s.y[i]; } });
+    this.refs.forEach(function (r) { if (r.inDomain) { y0 = Math.min(y0, r.y); y1 = Math.max(y1, r.y); } });
+    if (!isFinite(y0)) { y0 = 0; y1 = 1; }
+    var pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
+    if (cfg.yFloor != null) y0 = Math.max(y0, cfg.yFloor);
+  }
+  var sx = function (x) { return L + (x - x0) / (x1 - x0 || 1) * pw; }, sy = function (y) { return T + (1 - (y - y0) / (y1 - y0 || 1)) * ph; };
+  this.g = { L: L, pw: pw, x0: x0, x1: x1, sx: sx, sy: sy };
+  var cText = css("--muted"), cGrid = css("--grid"), cAxis = css("--axis");
+  ctx.font = "11px -apple-system, Segoe UI, Roboto, sans-serif"; ctx.textBaseline = "middle";
+  // gap bands
+  if (cfg.type === "time") { ctx.fillStyle = css("--band"); BANDS.forEach(function (b) { var a = Math.max(sx(b[0]), L), c = Math.min(sx(b[1]), L + pw); if (c > a) ctx.fillRect(a, T, c - a, ph); }); }
+  // grid + y ticks
+  ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.fillStyle = cText; ctx.textAlign = "right";
+  niceTicks(y0, y1, 5).forEach(function (t) { var y = Math.round(sy(t)) + .5; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke(); ctx.fillText(t + (cfg.yUnit || ""), L - 6, y); });
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  niceTicks(x0, x1, Math.max(3, Math.floor(pw / 90))).forEach(function (t) { var x = sx(t); if (x < L - 1 || x > L + pw + 1) return; ctx.fillText(t + (cfg.xUnit || ""), x, T + ph + 6); });
+  ctx.strokeStyle = cAxis; ctx.beginPath(); ctx.moveTo(L, T + ph + .5); ctx.lineTo(L + pw, T + ph + .5); ctx.stroke();
+  // ref lines
+  this.refs.forEach(function (r) {
+    if (r.y < y0 || r.y > y1) return; var y = Math.round(sy(r.y)) + .5;
+    ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = css("--muted"); ctx.globalAlpha = .7; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = cText; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(r.label, L + pw - 2, y - 2);
+  });
+  // series
+  ctx.save(); ctx.beginPath(); ctx.rect(L, T - 2, pw, ph + 4); ctx.clip();
+  this.series.forEach(function (s) {
+    var col = css(s.color); ctx.globalAlpha = s.alpha || 1;
+    if (s.kind === "dots") {
+      s.x.forEach(function (x, i) { if (x < x0 || x > x1) return; ctx.beginPath(); ctx.arc(sx(x), sy(s.y[i]), 4.5, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = css("--card"); ctx.stroke(); });
+      return;
+    }
+    ctx.strokeStyle = col; ctx.lineWidth = s.w || 2; ctx.lineJoin = "round"; ctx.setLineDash(s.dash ? [5, 4] : []);
+    ctx.beginPath(); var started = false, py = 0;
+    var lo = cfg.type === "time" ? Math.max(0, nearest(s.x, x0) - 1) : 0, hi = cfg.type === "time" ? Math.min(s.x.length - 1, nearest(s.x, x1) + 1) : s.x.length - 1;
+    for (var i = lo; i <= hi; i++) {
+      var X = sx(s.x[i]), Y = sy(s.y[i]);
+      if (!isFinite(s.y[i]) || (s.breaks && s.breaks[i])) { if (s.breaks && s.breaks[i] && isFinite(s.y[i])) { ctx.moveTo(X, Y); started = true; py = Y; } else started = false; continue; }
+      if (!started) { ctx.moveTo(X, Y); started = true; } else if (s.kind === "step") { ctx.lineTo(X, py); ctx.lineTo(X, Y); } else ctx.lineTo(X, Y);
+      py = Y;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  });
+  ctx.globalAlpha = 1;
+  if (cfg.type === "xy" && cfg.box) { var b = cfg.box; ctx.setLineDash([5, 4]); ctx.strokeStyle = css("--muted"); ctx.strokeRect(sx(b[0]), sy(b[3]), sx(b[1]) - sx(b[0]), sy(b[2]) - sy(b[3])); ctx.setLineDash([]); }
+  ctx.restore();
+  // drag selection
+  if (this.drag) { ctx.fillStyle = css("--accent"); ctx.globalAlpha = .12; ctx.fillRect(Math.min(this.drag.x0, this.drag.x1), T, Math.abs(this.drag.x1 - this.drag.x0), ph); ctx.globalAlpha = 1; }
+  // hover
+  var tip = this.tip, hx = cfg.type === "freq" ? this.localHover : HOVER;
+  if (hx == null || (cfg.type !== "xy" && (hx < x0 || hx > x1))) { tip.style.display = "none"; return; }
+  var rows = [], X;
+  if (cfg.type === "xy") {
+    var s0 = this.series[0]; if (!s0) return; var i0 = nearest(s0.t, hx);
+    X = sx(s0.x[i0]); var Y = sy(s0.y[i0]);
+    ctx.beginPath(); ctx.arc(X, Y, 6, 0, 7); ctx.fillStyle = css(s0.color); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = css("--card"); ctx.stroke();
+    tip.innerHTML = '<div class="h">t = ' + fmt(s0.t[i0], 2) + ' s</div><div class="r">Pan<b>' + s0.x[i0] + '°</b></div><div class="r">Tilt<b>' + s0.y[i0] + '°</b></div>';
+    tip.style.display = "block"; tip.style.left = (X + 14 + 140 > W ? X - 150 : X + 14) + "px"; tip.style.top = Math.max(4, Y - 30) + "px"; return;
+  }
+  X = sx(hx);
+  ctx.strokeStyle = css("--text-2"); ctx.globalAlpha = .45; ctx.beginPath(); ctx.moveTo(Math.round(X) + .5, T); ctx.lineTo(Math.round(X) + .5, T + ph); ctx.stroke(); ctx.globalAlpha = 1;
+  this.series.forEach(function (s) {
+    if (s.kind === "dots" || s.noTip) return;
+    var i = nearest(s.x, hx); if (Math.abs(s.x[i] - hx) > (x1 - x0) / 20) return;
+    var yv = s.y[i]; if (!isFinite(yv)) return;
+    ctx.beginPath(); ctx.arc(sx(s.x[i]), sy(yv), 4, 0, 7); ctx.fillStyle = css(s.color); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = css("--card"); ctx.stroke();
+    rows.push('<div class="r"><i class="sw' + (s.dash ? " dash" : "") + '" style="border-top-color:' + css(s.color) + '"></i>' + esc(s.name) + '<b>' + fmt(yv, s.dec == null ? 1 : s.dec) + (cfg.yUnit || "") + '</b></div>');
+  });
+  tip.innerHTML = '<div class="h">' + (cfg.type === "freq" ? fmt(hx, 2) + " Hz" : "t = " + fmt(hx, 2) + " s") + '</div>' + rows.join("");
+  tip.style.display = "block";
+  var tw = tip.offsetWidth; tip.style.left = (X + 14 + tw > W ? X - tw - 14 : X + 14) + "px"; tip.style.top = "6px";
+};
+ 
+/* ================= Wire up charts ================= */
+function chart(key, cfg) { return new Chart($('[data-chart="' + key + '"]'), cfg); }
+function lg(key) { return $('[data-lg="' + key + '"]'); }
+var C = {
+  raw: chart("raw", { type: "time", yUnit: "°", xUnit: "s", h: 240, label: "Raw roll, pitch and yaw over time" }),
+  time: chart("time", { type: "time", yUnit: "", xUnit: "s", yFloor: 0, label: "Milliseconds between samples" }),
+  clean: chart("clean", { type: "time", yUnit: "°", xUnit: "s", label: "Raw vs cleaned angle" }),
+  kf: chart("kf", { type: "time", yUnit: "°", xUnit: "s", label: "Cleaned vs Kalman-filtered angle" }),
+  db: chart("db", { type: "time", yUnit: "°", xUnit: "s", label: "Dead-band hold for yaw and pitch" }),
+  pan: chart("pan", { type: "time", yUnit: "°", xUnit: "s", label: "Pan servo target and command" }),
+  tilt: chart("tilt", { type: "time", yUnit: "°", xUnit: "s", label: "Tilt servo target and command" }),
+  ws: chart("ws", { type: "xy", yUnit: "°", xUnit: "°", xdom: [0, 180], ydom: [0, 180], h: 260, label: "Pan vs tilt trajectory" }),
+  fft: chart("fft", { type: "freq", yUnit: " dB", xUnit: " Hz", label: "Frequency spectrum" })
+};
+$$("[data-min]").forEach(function (b) { b.addEventListener("click", function () { var w = b.closest(".win"); w.classList.toggle("min"); b.textContent = w.classList.contains("min") ? "+" : "–"; redraw(); }); });
+$$("[data-max]").forEach(function (b) { b.addEventListener("click", function () { b.closest(".win").classList.toggle("wide"); redraw(); }); });
+$("#btnZoom").addEventListener("click", function () { VIEW = null; redraw(); });
+$("#focus").addEventListener("change", function () { render(); });
+ 
+/* ================= Run ================= */
+var LAST = null, runTimer = null;
+function scheduleRun() { clearTimeout(runTimer); runTimer = setTimeout(run, 60); }
+var AX = { roll: { name: "Roll", c: "--s1" }, pitch: { name: "Pitch", c: "--s2" }, yaw: { name: "Yaw", c: "--s3" } };
+ 
+function run() {
+  if (!DATA) return;
+  var M = toModel(readParams());
+  var R = process(DATA, M); R._M = M;
+  var F = process(DATA, toModel(PRESETS.firmware)); F._M = toModel(PRESETS.firmware);
+  LAST = { R: R, F: F, mR: metrics(DATA, R), mF: metrics(DATA, F) };
+  FULL = [DATA.t[0], DATA.t[DATA.t.length - 1]];
+  if (VIEW && (VIEW[0] > FULL[1] || VIEW[1] < FULL[0])) VIEW = null;
+  BANDS = R.gaps;
+  render();
+}
+ 
+function render() {
+  if (!LAST) return;
+  var d = DATA, R = LAST.R, M = R._M, ax = $("#focus").value, A = AX[ax];
+  $$("[data-axis]").forEach(function (e) { e.textContent = A.name; });
+  var brk = R.seg;
+  // 0 raw
+  C.raw.set(["roll", "pitch", "yaw"].map(function (k) { return { name: AX[k].name, x: d.t, y: d[k], color: AX[k].c, breaks: brk }; }), [], lg("raw"));
+  // 1 timing
+  var nominal = median(R.dt.filter(isFinite));
+  C.time.set([{ name: "Time since previous sample (ms)", x: d.t, y: R.dt, color: "--s1", w: 1.5, dec: 0 }],
+    [{ y: M.gap * 1000, label: "gap threshold " + M.gap * 1000 + " ms" }, { y: nominal, label: "median " + nominal.toFixed(0) + " ms" }], lg("time"));
+  $("#n-time").innerHTML = "Median <b>" + nominal.toFixed(0) + " ms</b> (" + (1000 / nominal).toFixed(1) + " Hz), jitter σ <b>" + fmt(LAST.mR.jitter, 0) + " ms</b>. " +
+    "<b>" + R.gaps.length + "</b> gap(s) longer than " + M.gap + " s reset the Kalman filter, like <code>KF_MAX_GAP</code> in the firmware.";
+  // 2 clean
+  var sp = R.spikes[ax], rawAx = d[ax];
+  C.clean.set([
+    { name: "Raw " + A.name, x: d.t, y: rawAx, color: "--raw", w: 1.25, breaks: brk },
+    { name: "Cleaned", x: d.t, y: R.clean[ax], color: A.c, breaks: brk },
+    { name: "Removed spike", kind: "dots", x: sp.map(function (i) { return d.t[i]; }), y: sp.map(function (i) { return rawAx[i]; }), color: "--s8" }
+  ], [], lg("clean"));
+  $("#n-clean").innerHTML = (ax === "yaw" ? (M.unwrap ? "Unwrap fixed <b>" + R.jumps + "</b> jump(s) across ±180°. " : "<b>Unwrap is off</b> — a turn past ±180° looks like a 360° jump. ") : "") +
+    (M.hampel ? "Hampel filter replaced <b>" + sp.length + "</b> sample(s) that were more than " + M.hn + "σ from the median of the last " + (2 * M.hk + 1) + " samples. The window only looks back, so it can run live on the ESP32." : "<b>Spike removal is off</b>, as in the firmware.");
+  // 3 kalman
+  var k = R.kf[ax];
+  C.kf.set([
+    { name: "Cleaned " + A.name, x: d.t, y: R.clean[ax], color: "--raw", w: 1.25, breaks: brk },
+    { name: "Kalman (browser)", x: d.t, y: k, color: A.c, breaks: brk }
+  ].concat(ax === "yaw" && d.kfy ? [{ name: "Kalman (ESP32 log)", x: d.t, y: d.kfy, color: "--s1", dash: true }] :
+           ax === "pitch" && d.kfp ? [{ name: "Kalman (ESP32 log)", x: d.t, y: d.kfp, color: "--s1", dash: true }] : []), [], lg("kf"));
+  var q = ax === "yaw" ? M.Qp : M.Qt, r = ax === "yaw" ? M.Rp : M.Rt;
+  var red = (1 - rough(k) / rough(R.clean[ax])) * 100, lag = lagMs(d.t, R.clean[ax], k);
+  $("#n-kf").innerHTML = "Constant-velocity model, Q = <b>" + fmtLog(Math.log10(q)) + "</b>, R = <b>" + fmtLog(Math.log10(r)) + "</b>. " +
+    "Roughness down <b>" + fmt(red, 0) + "%</b>, delay about <b>" + fmt(lag, 0) + " ms</b>. Higher Q follows faster; higher R smooths more.";
+  // 4 dead-band
+  C.db.set([
+    { name: "Yaw (Kalman)", x: d.t, y: R.kf.yaw, color: "--s3", w: 1, alpha: .5, breaks: brk, noTip: false },
+    { name: "Yaw held", x: d.t, y: R.heldYaw, color: "--s3", kind: "step", breaks: brk },
+    { name: "Pitch (Kalman)", x: d.t, y: R.kf.pitch, color: "--s2", w: 1, alpha: .5, breaks: brk },
+    { name: "Pitch held", x: d.t, y: R.heldPitch, color: "--s2", kind: "step", breaks: brk }
+  ], [], lg("db"));
+  var chP = 0, chT = 0; for (var i = 1; i < d.t.length; i++) { if (R.heldYaw[i] !== R.heldYaw[i - 1]) chP++; if (R.heldPitch[i] !== R.heldPitch[i - 1]) chT++; }
+  $("#n-db").innerHTML = "The output only moves when the input changes by at least <b>" + M.dbp + "°</b> (yaw) or <b>" + M.dbt + "°</b> (pitch). " +
+    "Yaw held value changed on <b>" + Math.round(chP / d.t.length * 100) + "%</b> of samples, pitch on <b>" + Math.round(chT / d.t.length * 100) + "%</b>.";
+  // 5 pan / tilt
+  function servoSeries(tgt, cmd, logged, lo, hi) {
+    var s = [{ name: "Target (mapped + clamped)", x: d.t, y: tgt, color: "--raw", w: 1.5, kind: "step", dec: 1 },
+             { name: "Servo command (rate-limited, 20 ms)", x: R.servo.t, y: cmd, color: "--s1", dec: 0 }];
+    if (logged) s.push({ name: "Logged by ESP32", x: d.t, y: logged, color: "--s2", dash: true, dec: 1 });
+    return s;
+  }
+  C.pan.set(servoSeries(R.panTarget, R.servo.pan, d.pan, M.pmin, M.pmax), [{ y: M.pmin, label: "min " + M.pmin + "°", inDomain: true }, { y: M.pmax, label: "max " + M.pmax + "°", inDomain: true }, { y: 90, label: "center" }], lg("pan"));
+  C.tilt.set(servoSeries(R.tiltTarget, R.servo.tilt, d.tilt, M.tmin, M.tmax), [{ y: M.tmin, label: "min " + M.tmin + "°", inDomain: true }, { y: M.tmax, label: "max " + M.tmax + "°", inDomain: true }, { y: 90, label: "center" }], lg("tilt"));
+  var mR = LAST.mR;
+  $("#n-pan").innerHTML = "Yaw ±" + M.yin + "° maps to " + M.pmin + "–" + M.pmax + "°, limited to <b>" + M.rlp + " °/s</b>. At a limit <b>" + fmt(mR.panLim, 0) + "%</b> of the time. " +
+    (mR.slams ? "<b>" + mR.slams + " full-range swing(s)</b> caused by yaw wrap. " : "") + (mR.rmsePan != null ? "Error vs. ESP32 log: <b>" + fmt(mR.rmsePan, 2) + "°</b> RMS." : "");
+  $("#n-tilt").innerHTML = "Pitch ±" + M.pin + "° maps to " + M.tmin + "–" + M.tmax + "°, limited to <b>" + M.rlt + " °/s</b>. At a limit <b>" + fmt(mR.tiltLim, 0) + "%</b> of the time. " +
+    (mR.rmseTilt != null ? "Error vs. ESP32 log: <b>" + fmt(mR.rmseTilt, 2) + "°</b> RMS." : "");
+  // 6 workspace
+  C.ws.cfg.box = [M.pmin, M.pmax, M.tmin, M.tmax];
+  C.ws.set([{ name: "Servo command path", x: R.servo.pan, y: R.servo.tilt, t: R.servo.t, color: "--s1", w: 1.5, alpha: .75 }], [], lg("ws"));
+  // 6b spectrum
+  var sr = spectrum(d.t, d[ax]), sk = spectrum(d.t, R.kf[ax]);
+  C.fft.set([{ name: "Raw " + A.name, x: sr.f, y: sr.db, color: "--raw", w: 1.25 }, { name: "After Kalman", x: sk.f, y: sk.db, color: A.c }], [], lg("fft"));
+  var pk = 0; for (i = 0; i < sr.f.length; i++) if (sr.f[i] > 1 && sr.db[i] > (sr.db[pk] || -1e9)) pk = i;
+  $("#n-fft").innerHTML = "Sample rate ≈ <b>" + sr.fs.toFixed(1) + " Hz</b>, so the highest frequency visible is <b>" + (sr.fs / 2).toFixed(1) + " Hz</b>. " +
+    (sr.f[pk] ? "Strongest content above 1 Hz: <b>" + sr.f[pk].toFixed(2) + " Hz</b>. " : "") + "Hand tremor (≈8 Hz) above the Nyquist limit shows up at a false, lower frequency.";
+  // 7 metrics
+  renderMetrics();
+  // status
+  $("#status").innerHTML = "<b>Source:</b> " + esc(SOURCE) + " · <b>" + d.t.length + "</b> samples · <b>" + fmt(mR.dur, 1) + " s</b> · ≈" + fmt(mR.rate, 1) + " Hz" +
+    (d.dropped ? " · " + d.dropped + " unreadable row(s) skipped" : "") + (d.dup ? " · " + d.dup + " duplicate timestamp(s) removed" : "") +
+    (d.noTime ? " · <b>no time column</b>, assumed 10 Hz" : "") + (d.cols ? " · columns: " + esc(d.cols.join(", ")) : "") +
+    (d.pan ? " · ESP32 pan/tilt log found" : "");
+}
+ 
+function renderMetrics() {
+  var a = LAST.mF, b = LAST.mR;
+  var rows = [
+    ["Samples", "samples", 0, "", "Rows used after sorting and removing duplicates."],
+    ["Mean sample rate", "rate", 1, " Hz", "ESP32 polls phyphox every 100 ms (10 Hz)."],
+    ["Timing jitter (σ)", "jitter", 0, " ms", "Spread of time between samples."],
+    ["Gaps → filter reset", "gaps", 0, "", "Missing data longer than the gap threshold."],
+    ["Yaw wrap jumps fixed", "jumps", 0, "", "Firmware does not unwrap."],
+    ["Spikes removed", "spikes", 0, "", "All three axes. The look-back window also flags the first samples of a very fast move."],
+    ["Yaw roughness reduction", "yawRough", 0, " %", "Median |2nd difference|, raw vs. Kalman. Higher = smoother."],
+    ["Pitch roughness reduction", "pitchRough", 0, " %", ""],
+    ["Kalman delay (yaw)", "lagYaw", 0, " ms", "Time shift that best lines up filtered with cleaned yaw."],
+    ["End-to-end delay (pan)", "lagPan", 0, " ms", "Phone yaw → servo command, incl. dead-band and rate limiter."],
+    ["Full-range pan swings", "slams", 0, "", "Target jumps > 90° between two samples. Should be 0."],
+    ["Pan at a limit", "panLim", 0, " %", ""],
+    ["Tilt at a limit", "tiltLim", 0, " %", ""],
+    ["Servo writes per second", "writes", 1, "", "Fewer writes = less servo buzz."]
   ];
-  var FALLBACK_MONTHS = { "2026-03": 5, "2026-04": 10, "2026-05": 1, "2026-06": 0, "2026-07": 0, "2026-08": 2, "2026-09": 13 };
-  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  function drawChart(months) {
-    var keys = Object.keys(months).sort().slice(-7);
-    var max = Math.max.apply(null, keys.map(function (k) { return months[k]; }).concat([1]));
-    var chart = document.getElementById("chart"), xl = document.getElementById("xlabels");
-    chart.style.gridTemplateColumns = xl.style.gridTemplateColumns = "repeat(" + keys.length + ", 1fr)";
-    chart.innerHTML = keys.map(function (k) {
-      var v = months[k], m = MON[+k.slice(5) - 1] + " " + k.slice(0, 4);
-      return '<div class="col" tabindex="0" aria-label="' + m + ': ' + v + ' commits">' +
-        '<span class="tip">' + m + ': ' + v + (v === 1 ? ' commit' : ' commits') + '</span>' +
-        '<span class="val">' + (v || "") + '</span>' +
-        '<span class="bar" style="height:calc(' + (v / max) + ' * (100% - 24px))"></span></div>';
-    }).join("");
-    xl.innerHTML = keys.map(function (k) { return "<span>" + MON[+k.slice(5) - 1] + "</span>"; }).join("");
-    chart.setAttribute("aria-label", "Commits per month: " + keys.map(function (k) { return MON[+k.slice(5) - 1] + " " + months[k]; }).join(", "));
+  if (b.rmsePan != null) rows.push(["Pan error vs. ESP32 log", "rmsePan", 2, "°", "RMS. Near 0 means the browser matches the board."]);
+  if (b.rmseTilt != null) rows.push(["Tilt error vs. ESP32 log", "rmseTilt", 2, "°", ""]);
+  $("#metrics").innerHTML = '<thead><tr><th>Metric</th><th style="text-align:right">Firmware as-is</th><th style="text-align:right">Current settings</th><th>What it means</th></tr></thead><tbody>' +
+    rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td class="n">' + fmt(a[r[1]], r[2]) + r[3] + '</td><td class="n">' + fmt(b[r[1]], r[2]) + r[3] + '</td><td class="note">' + r[4] + '</td></tr>'; }).join("") + '</tbody>';
+}
+ 
+/* ================= Export ================= */
+$("#btnExport").addEventListener("click", function () {
+  if (!LAST) return;
+  var d = DATA, R = LAST.R, sp = {};
+  ["roll", "pitch", "yaw"].forEach(function (k) { sp[k] = {}; R.spikes[k].forEach(function (i) { sp[k][i] = 1; }); });
+  var head = "t_s,roll_raw,pitch_raw,yaw_raw,roll_clean,pitch_clean,yaw_clean,roll_kf,pitch_kf,yaw_kf,yaw_held,pitch_held,pan_target,tilt_target,pan_cmd,tilt_cmd,spike_roll,spike_pitch,spike_yaw,filter_reset";
+  var lines = [head];
+  for (var i = 0; i < d.t.length; i++) {
+    lines.push([d.t[i].toFixed(3), d.roll[i], d.pitch[i], d.yaw[i],
+      R.clean.roll[i].toFixed(3), R.clean.pitch[i].toFixed(3), R.clean.yaw[i].toFixed(3),
+      R.kf.roll[i].toFixed(3), R.kf.pitch[i].toFixed(3), R.kf.yaw[i].toFixed(3),
+      R.heldYaw[i].toFixed(3), R.heldPitch[i].toFixed(3), R.panTarget[i].toFixed(2), R.tiltTarget[i].toFixed(2),
+      R.panAtSample[i], R.tiltAtSample[i], sp.roll[i] ? 1 : 0, sp.pitch[i] ? 1 : 0, sp.yaw[i] ? 1 : 0, R.seg[i] ? 1 : 0].join(","));
   }
-
-  function drawUpdates(items) {
-    document.getElementById("updates").innerHTML = items.slice(0, 7).map(function (c) {
-      var d = new Date(c.date + "T00:00:00");
-      return '<li><span class="date">' + MON[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() +
-        '</span><span>' + esc(c.msg) + '<br><span class="who">by ' + esc(c.who) + '</span></span></li>';
-    }).join("");
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+  a.download = "processed_" + SOURCE.replace(/[^\w.-]+/g, "_").replace(/\.csv$/i, "") + ".csv";
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+});
+ 
+/* ================= Loading ================= */
+function useData(raw, source) {
+  if (LIVE.on) liveStop();
+  try { var d = prep(raw); if (d.t.length < 10) throw new Error("Need at least 10 valid rows."); d.cols = raw.cols; d.noTime = raw.noTime; DATA = d; SOURCE = source; VIEW = null; run(); }
+  catch (e) { $("#status").innerHTML = "<b>Could not use " + esc(source) + ":</b> " + esc(e.message); }
+}
+function loadDemo() { var fs = +$("#demoRate").value; useData(makeDemo(fs), "Demo recording (synthetic, " + fs + " Hz)"); }
+$("#btnDemo").addEventListener("click", loadDemo);
+$("#demoRate").addEventListener("change", loadDemo);
+function readFile(f) {
+  if (!f) return; var rd = new FileReader();
+  rd.onload = function () { try { useData(parseCSV(rd.result), f.name); } catch (e) { $("#status").innerHTML = "<b>Could not read " + esc(f.name) + ":</b> " + esc(e.message); } };
+  rd.readAsText(f);
+}
+$("#file").addEventListener("change", function (e) { readFile(e.target.files[0]); e.target.value = ""; });
+var drop = $("#drop");
+drop.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#file").click(); } });
+["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+drop.addEventListener("drop", function (e) { readFile(e.dataTransfer.files[0]); });
+function loadRepo(path, quiet) {
+  // Only same-site relative paths, so the page never pulls data from an unknown host.
+  if (!/^[\w\-./ ]+\.(csv|txt)$/i.test(path) || /\.\./.test(path)) { $("#status").innerHTML = "<b>Path must be a .csv file inside this repo</b>, e.g. data/latest.csv"; return Promise.reject(); }
+  return fetch(encodeURI(path), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function (txt) { useData(parseCSV(txt), path); })
+    .catch(function (e) { if (!quiet) $("#status").innerHTML = "<b>Could not load " + esc(path) + ":</b> " + esc(e.message || "not found"); throw e; });
+}
+$("#btnRepo").addEventListener("click", function () { loadRepo($("#repoPath").value.trim()).catch(function () {}); });
+ 
+ 
+/* ================= Live mode: Web Serial (USB) =================
+   Reads lines printed by the ESP32-S3 firmware:  D,t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt
+   Other Serial output (boot messages etc.) is ignored. Needs Chrome or Edge on a computer, over HTTPS or localhost. */
+var LIVE = { port: null, reader: null, closed: null, on: false, rows: [], dirty: false, bad: 0, timer: null, lastRx: 0 };
+var LIVE_HEAD = "t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt";
+if (!("serial" in navigator)) {
+  $("#btnLive").disabled = true;
+  $("#liveInfo").textContent = "This browser has no Web Serial. Use Chrome or Edge on a computer.";
+}
+function liveLine(line) {
+  line = line.trim();
+  if (line.indexOf("D,") !== 0) return;
+  var v = line.slice(2).split(",").map(Number);
+  if (v.length !== 10 || v.some(function (x) { return !isFinite(x); })) { LIVE.bad++; return; }
+  var prev = LIVE.rows[LIVE.rows.length - 1];
+  if (prev && v[0] < prev[0]) LIVE.rows = [];            // board rebooted (millis restarted) → new session
+  LIVE.rows.push(v); LIVE.dirty = true; LIVE.lastRx = Date.now();
+  if (LIVE.rows.length > 36000) LIVE.rows.shift();       // keep at most ~1 hour at 10 Hz
+}
+function liveRender() {
+  var info = LIVE.rows.length + " rows" + (LIVE.bad ? " · " + LIVE.bad + " bad line(s)" : "");
+  if (LIVE.on && Date.now() - LIVE.lastRx > 2000) info += " · no data for " + Math.round((Date.now() - LIVE.lastRx) / 1000) + " s (is the phone connected and the board in AUTO mode?)";
+  $("#liveInfo").textContent = info;
+  if (!LIVE.dirty || LIVE.rows.length < 10) return;
+  LIVE.dirty = false;
+  var win = +$("#liveWin").value, rows = LIVE.rows, tEnd = rows[rows.length - 1][0], t0 = rows[0][0];
+  var sel = rows.filter(function (r) { return r[0] >= tEnd - win * 1000; });
+  if (sel.length < 10) return;
+  var col = function (j) { return sel.map(function (r) { return r[j]; }); };
+  var raw = { keepTime: true, t: sel.map(function (r) { return (r[0] - t0) / 1000; }),
+    roll: col(1), pitch: col(2), yaw: col(3), kfy: col(4), kfp: col(5), pan: col(8), tilt: col(9),
+    cols: ["live USB: " + LIVE_HEAD] };
+  var d = prep(raw); d.cols = raw.cols;
+  DATA = d; SOURCE = "Live USB — last " + win + " s";
+  run();
+}
+async function liveStart() {
+  try {
+    var port = await navigator.serial.requestPort();      // user picks the port; nothing is opened without that
+    await port.open({ baudRate: 115200 });
+    LIVE.port = port; LIVE.on = true; LIVE.rows = []; LIVE.bad = 0; LIVE.lastRx = Date.now(); VIEW = null;
+    $("#btnLive").disabled = true; $("#btnStop").disabled = false; $("#btnSaveLive").disabled = false;
+    LIVE.timer = setInterval(liveRender, 250);
+    var dec = new TextDecoderStream();
+    LIVE.closed = port.readable.pipeTo(dec.writable).catch(function () {});
+    LIVE.reader = dec.readable.getReader();
+    var pending = "";
+    while (LIVE.on) {
+      var r = await LIVE.reader.read();
+      if (r.done) break;
+      pending += r.value;
+      var lines = pending.split("\n"); pending = lines.pop();
+      lines.forEach(liveLine);
+    }
+  } catch (e) {
+    if (e && e.name !== "NotFoundError") $("#liveInfo").textContent = "Serial error: " + (e.message || e) + " — close Arduino Serial Monitor and try again.";
   }
-
-  function setLast(dateStr) {
-    var d = new Date(dateStr + "T00:00:00");
-    document.getElementById("statLast").textContent = MON[d.getMonth()] + " " + d.getDate();
-    document.getElementById("statLastYear").textContent = d.getFullYear();
-  }
-
-  drawChart(FALLBACK_MONTHS);
-  drawUpdates(FALLBACK);
-
-  // Live refresh from the public GitHub API (no login). Keeps built-in data if it fails.
-  if (window.fetch) {
-    fetch("https://api.github.com/repos/" + REPO + "/commits?per_page=100")
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (data) {
-        if (!Array.isArray(data) || !data.length) return;
-        var items = data.map(function (c) {
-          return {
-            date: (c.commit.author.date || "").slice(0, 10),
-            who: (c.author && c.author.login) || c.commit.author.name || "unknown",
-            msg: (c.commit.message || "").split("\n")[0]
-          };
-        });
-        var months = {};
-        // fill empty months between first and last so gaps show as 0
-        var first = items[items.length - 1].date.slice(0, 7), last = items[0].date.slice(0, 7);
-        var y = +first.slice(0, 4), m = +first.slice(5);
-        while (true) {
-          var key = y + "-" + (m < 10 ? "0" : "") + m;
-          months[key] = 0;
-          if (key >= last) break;
-          m++; if (m > 12) { m = 1; y++; }
-        }
-        items.forEach(function (it) { months[it.date.slice(0, 7)]++; });
-        drawChart(months);
-        drawUpdates(items);
-        setLast(items[0].date);
-        if (data.length < 100) document.getElementById("statCommits").textContent = data.length;
-        else document.getElementById("statCommits").textContent = "100+";
-        document.getElementById("chartNote").textContent = "Live data from GitHub. Hover over a bar to see the number.";
-      })
-      .catch(function () { /* keep built-in data */ });
-  }
+  liveCleanup();
+}
+async function liveStop() {
+  LIVE.on = false;
+  try { if (LIVE.reader) await LIVE.reader.cancel(); } catch (e) {}
+}
+async function liveCleanup() {
+  clearInterval(LIVE.timer);
+  try { if (LIVE.reader) LIVE.reader.releaseLock(); } catch (e) {}
+  try { if (LIVE.closed) await LIVE.closed; } catch (e) {}
+  try { if (LIVE.port) await LIVE.port.close(); } catch (e) {}
+  LIVE.port = LIVE.reader = LIVE.closed = null; LIVE.on = false;
+  $("#btnLive").disabled = !("serial" in navigator); $("#btnStop").disabled = true;
+  liveRender();
+  if (LIVE.rows.length) $("#liveInfo").textContent = "Stopped · " + LIVE.rows.length + " rows kept. Save the session CSV to analyse it later.";
+}
+$("#btnLive").addEventListener("click", liveStart);
+$("#btnStop").addEventListener("click", liveStop);
+$("#liveWin").addEventListener("change", function () { LIVE.dirty = true; VIEW = null; liveRender(); });
+$("#btnSaveLive").addEventListener("click", function () {
+  if (!LIVE.rows.length) return;
+  var txt = LIVE_HEAD + "\n" + LIVE.rows.map(function (r) { return r.join(","); }).join("\n");
+  var a = document.createElement("a"), ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv" })); a.download = "live_" + ts + ".csv";
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+});
+ 
+applyPresetSilently(PRESETS.recommended);
+function applyPresetSilently(p) { KEYS.forEach(function (k) { var el = $("#" + k); if (el.type === "checkbox") el.checked = p[k]; else el.value = p[k]; }); showOutputs(); }
+loadRepo("data/latest.csv", true).catch(loadDemo);
 })();
 </script>
-
 </body>
 </html>
+ 
+

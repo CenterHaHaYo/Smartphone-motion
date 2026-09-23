@@ -62,6 +62,12 @@ const float PAN_KF_Q  = 100.0;
 const float TILT_KF_Q = 100.0;
 const float KF_MAX_GAP = 0.5;
 
+
+// ================= Serial data log (for the Pan-Tilt Motion Lab web page) =================
+// 1 = print one CSV line per phone reading:
+//     D,t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt
+#define LOG_SERIAL 1
+
 struct Kalman2 {
   float angle = 0.0;
   float rate  = 0.0;
@@ -208,6 +214,14 @@ void driveServosFromMotion(float pitch, float yaw) {
     mapFloat(panInput, YAW_MIN_INPUT, YAW_MAX_INPUT, PAN_MIN, PAN_MAX), PAN_MIN, PAN_MAX);
   targetTiltAngle = clampFloat(
     mapFloat(tiltInput, PITCH_MIN_INPUT, PITCH_MAX_INPUT, TILT_MIN, TILT_MAX), TILT_MIN, TILT_MAX);
+
+#if LOG_SERIAL
+  Serial.printf("D,%lu,%.3f,%.3f,%.3f,%.3f,%.3f,%.2f,%.2f,%.2f,%.2f\n",
+                now, lastRawRoll, lastRawPitch, lastRawYaw,
+                filteredPanInput, filteredTiltInput,
+                targetPanAngle, targetTiltAngle,
+                currentPanAngle, currentTiltAngle);
+#endif
 }
 
 void updateServos(float dt) {
