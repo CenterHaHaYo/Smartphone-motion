@@ -23,3 +23,5 @@ Thumbs.db
 
 # Local Wi-Fi / AP credentials - never commit real secrets
 include/secrets.h
+
+*.code-workspace
