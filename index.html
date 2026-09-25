@@ -18,6 +18,7 @@
     --warn: #fab219; --warn-ink: #8a5a00; --warn-soft: #fdf1d6;
     --todo-ink: #52514e; --todo-soft: #ecebe7;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --m-body: #34343a; --m-screen: #2a78d6; --m-cam: #1d1d20; --m-base: #9c9a93; --m-metal: #3d3d42; --m-bracket: #cfcdc6; --m-head: #6f7a8a;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -29,6 +30,7 @@
       --raw: #62615b; --grid: #2a2a27; --axis: #44443f; --band: rgba(250,178,25,.10);
       --good-ink: #5fd35f; --good-soft: #17301a; --warn-ink: #fab219; --warn-soft: #3a2e12;
       --todo-ink: #c3c2b7; --todo-soft: #2a2a27;
+      --m-body: #55555c; --m-screen: #3987e5; --m-cam: #2c2c30; --m-base: #6b6a64; --m-metal: #4a4a50; --m-bracket: #a8a69e; --m-head: #7d8898;
     }
   }
   :root[data-theme="dark"] {
@@ -40,6 +42,7 @@
     --raw: #62615b; --grid: #2a2a27; --axis: #44443f; --band: rgba(250,178,25,.10);
     --good-ink: #5fd35f; --good-soft: #17301a; --warn-ink: #fab219; --warn-soft: #3a2e12;
     --todo-ink: #c3c2b7; --todo-soft: #2a2a27;
+    --m-body: #55555c; --m-screen: #3987e5; --m-cam: #2c2c30; --m-base: #6b6a64; --m-metal: #4a4a50; --m-bracket: #a8a69e; --m-head: #7d8898;
   }
   * { box-sizing: border-box; }
   body {
@@ -147,6 +150,24 @@
   .drop { border: 1.5px dashed var(--axis); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
   .drop.over { border-color: var(--accent); color: var(--accent); }
  
+  /* Motion view */
+  .anim { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 700px) { .anim { grid-template-columns: minmax(0, 1fr); } }
+  .stage { margin: 0; background: var(--card-2); border-radius: 10px; padding: 8px 10px 10px; min-width: 0; }
+  .stage figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .stage figcaption span { color: var(--muted); font-size: 12px; text-align: right; }
+  .stage canvas { display: block; width: 100%; height: 280px; cursor: grab; touch-action: pan-y; }
+  .readout { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; min-height: 20px; }
+  .readout span { display: inline-flex; align-items: center; gap: 5px; }
+  .readout b { color: var(--text); font-family: var(--mono); font-weight: 600; }
+  .readout small { color: var(--muted); }
+  .play { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+  .play input[type=range] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+  .play select { font: inherit; font-size: 13px; padding: 4px 6px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .atime { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); min-width: 96px; }
+  .amode { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--todo-soft); color: var(--todo-ink); }
+  .amode.live { background: var(--good-soft); color: var(--good-ink); }
+ 
   table.m { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   table.m th, table.m td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
   table.m th { font-size: 12px; color: var(--muted); font-weight: 600; border-top: none; }
@@ -220,6 +241,7 @@
   <p class="sub">The same pipeline as <code>esp32-smartphone-control-APkm.cpp</code>, re-run in your browser. Change a setting and every window updates. Drag across any time chart to zoom; double-click to reset.</p>
  
   <nav class="pipe" aria-label="Pipeline steps">
+    <a href="#w-anim"><span>▶</span>Motion view</a><span class="ar">·</span>
     <a href="#w-raw"><span>0</span>Raw RPY</a><span class="ar">→</span>
     <a href="#w-time"><span>1</span>Timing &amp; gaps</a><span class="ar">→</span>
     <a href="#w-clean"><span>2</span>Unwrap + spikes</a><span class="ar">→</span>
@@ -298,6 +320,30 @@
       </div>
     </div>
  
+    <!-- Motion view -->
+    <div class="win wide" id="w-anim">
+      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Motion view — smartphone and pan-tilt platform</span><span class="step">3D</span><button type="button" data-min aria-label="Minimize">–</button></div>
+      <div class="wbody">
+        <div class="anim">
+          <figure class="stage"><figcaption><b>Smartphone</b><span>raw Roll · Pitch · Yaw</span></figcaption>
+            <canvas id="cvPhone" role="img" aria-label="3D smartphone turned by the recorded roll, pitch and yaw"></canvas>
+            <div class="readout" id="roPhone"></div></figure>
+          <figure class="stage"><figcaption><b>Pan-tilt platform</b><span>servo command after the pipeline</span></figcaption>
+            <canvas id="cvRig" role="img" aria-label="3D pan-tilt platform turned by the pan and tilt servo commands"></canvas>
+            <div class="readout" id="roRig"></div></figure>
+        </div>
+        <div class="play">
+          <button class="btn sm primary" type="button" id="aPlay">▶ Play</button>
+          <input type="range" id="aSeek" min="0" max="1000" value="0" aria-label="Playback position">
+          <span class="atime" id="aTime">–</span>
+          <select id="aSpeed" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <span class="amode" id="aMode">Replay</span>
+        </div>
+        <p class="wnote">Solid blue ray = where the camera points (servo command). Dashed ray = the target before the rate limiter, so the gap between the two is the lag the pipeline adds. The dashed arc on the base is the allowed pan range.
+          Hover any chart to show that moment here. Drag a 3D view to turn it; double-click to reset. In live mode both models follow the board in real time.</p>
+      </div>
+    </div>
+
     <!-- 0 Raw -->
     <div class="win wide" id="w-raw">
       <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Raw input from phyphox — Roll, Pitch, Yaw</span><span class="step">step 0</span><button type="button" data-min aria-label="Minimize">–</button></div>
@@ -425,6 +471,7 @@ var GOALS = [
   { p: "Visualization",       s: "done",  t: "2-DOF camera stand simulator", d: "2DOF_motion.py previews pan and tilt before hardware." },
   { p: "Visualization",       s: "done",  t: "Full system diagram", d: "One picture of every connection." },
   { p: "Visualization",       s: "doing", t: "Progress dashboard + pre-processing workbench", d: "This page." },
+  { p: "Visualization",       s: "done",  t: "Animated phone + pan-tilt view", d: "3D replay on this page, synced with the charts and with live USB data." },
   { p: "Visualization",       s: "todo",  t: "Photos and demo video of the real stand", d: "Show it working." },
   { p: "Data pre-processing", s: "done",  t: "Kalman filter comparison in Python", d: "Raw vs. filtered graphs for each axis." },
   { p: "Data pre-processing", s: "done",  t: "FFT to find shake frequency", d: "Rolling 128-sample window per axis." },
@@ -767,7 +814,7 @@ function spectrum(t, a) {
 }
  
 /* ================= Canvas chart ================= */
-var CHARTS = [], VIEW = null, FULL = [0, 1], HOVER = null, BANDS = [], drawQueued = false;
+var CHARTS = [], VIEW = null, FULL = [0, 1], HOVER = null, PLAYHEAD = null, BANDS = [], drawQueued = false;
 function redraw() { if (drawQueued) return; drawQueued = true; requestAnimationFrame(function () { drawQueued = false; CHARTS.forEach(function (c) { c.draw(); }); }); }
 function niceTicks(lo, hi, n) {
   var span = hi - lo || 1, s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), f = s0 / mag;
@@ -880,6 +927,13 @@ Chart.prototype.draw = function () {
   ctx.globalAlpha = 1;
   if (cfg.type === "xy" && cfg.box) { var b = cfg.box; ctx.setLineDash([5, 4]); ctx.strokeStyle = css("--muted"); ctx.strokeRect(sx(b[0]), sy(b[3]), sx(b[1]) - sx(b[0]), sy(b[2]) - sy(b[3])); ctx.setLineDash([]); }
   ctx.restore();
+  // playback position from the motion view
+  if (PLAYHEAD != null) {
+    ctx.strokeStyle = css("--accent"); ctx.lineWidth = 1.5;
+    if (cfg.type === "time" && PLAYHEAD >= x0 && PLAYHEAD <= x1) { var PX = Math.round(sx(PLAYHEAD)) + .5; ctx.beginPath(); ctx.moveTo(PX, T); ctx.lineTo(PX, T + ph); ctx.stroke(); }
+    else if (cfg.type === "xy" && this.series[0] && this.series[0].t) { var sp0 = this.series[0], ip = nearest(sp0.t, PLAYHEAD); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(sx(sp0.x[ip]), sy(sp0.y[ip]), 7, 0, 7); ctx.stroke(); }
+    ctx.lineWidth = 1;
+  }
   // drag selection
   if (this.drag) { ctx.fillStyle = css("--accent"); ctx.globalAlpha = .12; ctx.fillRect(Math.min(this.drag.x0, this.drag.x1), T, Math.abs(this.drag.x1 - this.drag.x0), ph); ctx.globalAlpha = 1; }
   // hover
@@ -1062,6 +1116,208 @@ $("#btnExport").addEventListener("click", function () {
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 });
  
+/* ================= Motion view: animated phone + pan-tilt =================
+   Tiny canvas 3D: boxes are projected with perspective, back faces culled, the rest painted far-to-near.
+   World frame: z up, +y = "front". Phone at rest lies flat, screen up, top edge pointing front.
+   Phone rotation = Rz(yaw)·Rx(pitch)·Ry(roll). Rig: pan turns about z, tilt about the head's x axis (90° = level, facing front). */
+var D2R = Math.PI / 180;
+function rotX(a) { var c = Math.cos(a), s = Math.sin(a); return [[1, 0, 0], [0, c, -s], [0, s, c]]; }
+function rotY(a) { var c = Math.cos(a), s = Math.sin(a); return [[c, 0, s], [0, 1, 0], [-s, 0, c]]; }
+function rotZ(a) { var c = Math.cos(a), s = Math.sin(a); return [[c, -s, 0], [s, c, 0], [0, 0, 1]]; }
+function mmul(A, B) { var o = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) o[i][j] = A[i][0] * B[0][j] + A[i][1] * B[1][j] + A[i][2] * B[2][j]; return o; }
+function mvec(M, v) { return [M[0][0] * v[0] + M[0][1] * v[1] + M[0][2] * v[2], M[1][0] * v[0] + M[1][1] * v[1] + M[1][2] * v[2], M[2][0] * v[0] + M[2][1] * v[1] + M[2][2] * v[2]]; }
+function rgbOf(tok) { var h = css(tok); if (h.length === 4) h = "#" + h[1] + h[1] + h[2] + h[2] + h[3] + h[3]; var n = parseInt(h.slice(1), 16); return isFinite(n) ? [n >> 16 & 255, n >> 8 & 255, n & 255] : [128, 128, 128]; }
+// Box faces, wound counter-clockwise seen from outside
+var BOXF = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [2, 3, 7, 6], [0, 4, 7, 3], [1, 2, 6, 5]];
+function box(a, b, col, M, T) {
+  var v = [[a[0], a[1], a[2]], [b[0], a[1], a[2]], [b[0], b[1], a[2]], [a[0], b[1], a[2]], [a[0], a[1], b[2]], [b[0], a[1], b[2]], [b[0], b[1], b[2]], [a[0], b[1], b[2]]]
+    .map(function (p) { var q = M ? mvec(M, p) : p; return T ? [q[0] + T[0], q[1] + T[1], q[2] + T[2]] : q; });
+  return BOXF.map(function (f) { return { p: f.map(function (i) { return v[i]; }), c: col }; });
+}
+function hull(P) {
+  P = P.slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+  var cr = function (o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }, lo = [], up = [], i;
+  for (i = 0; i < P.length; i++) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], P[i]) <= 0) lo.pop(); lo.push(P[i]); }
+  for (i = P.length - 1; i >= 0; i--) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], P[i]) <= 0) up.pop(); up.push(P[i]); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+
+function Stage(sel, view) {
+  this.cv = $(sel); this.home = view; this.v = { az: view.az, el: view.el }; this.W = 0; this.H = 0;
+  var self = this, drag = null;
+  this.cv.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY }; self.cv.setPointerCapture(e.pointerId); self.cv.style.cursor = "grabbing"; });
+  this.cv.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    self.v.az += (e.clientX - drag.x) * 0.01; self.v.el = Math.max(0.05, Math.min(1.35, self.v.el + (e.clientY - drag.y) * 0.01));
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  ["pointerup", "pointercancel"].forEach(function (ev) { self.cv.addEventListener(ev, function () { drag = null; self.cv.style.cursor = ""; }); });
+  this.cv.addEventListener("dblclick", function () { self.v = { az: self.home.az, el: self.home.el }; });
+}
+Stage.prototype.begin = function () {
+  var W = this.cv.clientWidth, H = this.cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!W || !H) return false;
+  if (this.cv.width !== Math.round(W * dpr) || this.cv.height !== Math.round(H * dpr)) { this.cv.width = Math.round(W * dpr); this.cv.height = Math.round(H * dpr); }
+  this.ctx = this.cv.getContext("2d"); this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.ctx.clearRect(0, 0, W, H);
+  this.W = W; this.H = H; this.S = Math.min(W, H * 1.25) * this.home.k;
+  return true;
+};
+// world point → [screen x, screen y, depth]
+Stage.prototype.p = function (q) {
+  var ca = Math.cos(this.v.az), sa = Math.sin(this.v.az), ce = Math.cos(this.v.el), se = Math.sin(this.v.el);
+  var z = q[2] - this.home.cz, x1 = ca * q[0] - sa * q[1], y1 = sa * q[0] + ca * q[1];
+  var up = z * ce + y1 * se, dep = y1 * ce - z * se, f = 6 / (6 + dep) * this.S;
+  return [this.W / 2 + x1 * f, this.H / 2 - up * f, dep];
+};
+Stage.prototype.line = function (pts, col, w, dash) {
+  var c = this.ctx, self = this;
+  c.beginPath(); pts.forEach(function (q, i) { var s = self.p(q); if (i) c.lineTo(s[0], s[1]); else c.moveTo(s[0], s[1]); });
+  c.strokeStyle = col; c.lineWidth = w || 1; c.setLineDash(dash || []); c.stroke(); c.setLineDash([]);
+};
+Stage.prototype.grid = function (z, r) {
+  var a = css("--axis"), m = css("--muted");
+  this.ctx.globalAlpha = 0.8;
+  for (var i = -r; i <= r + 1e-9; i += 0.5) { var c = Math.abs(i) < 1e-9 ? m : a; this.line([[i, -r, z], [i, r, z]], c); this.line([[-r, i, z], [r, i, z]], c); }
+  this.ctx.globalAlpha = 1;
+  this.line([[0, r - 0.3, z], [0, r + 0.25, z]], m, 1.5); this.line([[-0.12, r + 0.08, z], [0, r + 0.25, z], [0.12, r + 0.08, z]], m, 1.5);
+  var s = this.p([0, r + 0.45, z]); this.ctx.fillStyle = m; this.ctx.font = "11px -apple-system, Segoe UI, Roboto, sans-serif";
+  this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle"; this.ctx.fillText("front", s[0], s[1]);
+};
+Stage.prototype.shadow = function (faces, z) {
+  var self = this, pts = [];
+  faces.forEach(function (f) { f.p.forEach(function (q) { var s = self.p([q[0], q[1], z]); pts.push([s[0], s[1]]); }); });
+  var h = hull(pts), c = this.ctx; if (h.length < 3) return;
+  c.beginPath(); h.forEach(function (q, i) { if (i) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); }); c.closePath();
+  c.fillStyle = "rgba(0,0,0,.13)"; c.fill();
+};
+Stage.prototype.facing = function (f) {                   // true when the face points at the camera
+  var self = this, s = f.p.map(function (q) { return self.p(q); }), area = 0;
+  for (var i = 0; i < s.length; i++) { var j = (i + 1) % s.length; area += s[i][0] * s[j][1] - s[j][0] * s[i][1]; }
+  return area < 0;
+};
+Stage.prototype.depth = function (faces) { var self = this, z = 0, n = 0; faces.forEach(function (f) { f.p.forEach(function (q) { z += self.p(q)[2]; n++; }); }); return z / n; };
+Stage.prototype.faces = function (list) {
+  var self = this, L = [-0.38, -0.52, 0.76], out = [], c = this.ctx;
+  list.forEach(function (f) {
+    var s = f.p.map(function (q) { return self.p(q); }), area = 0;
+    for (var i = 0; i < s.length; i++) { var j = (i + 1) % s.length; area += s[i][0] * s[j][1] - s[j][0] * s[i][1]; }
+    if (area >= 0) return;                                  // back face (screen y points down, so front faces come out negative)
+    var a = f.p[0], b = f.p[1], d = f.p[2], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], w = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+    var n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]], nl = Math.hypot(n[0], n[1], n[2]) || 1;
+    var lit = 0.6 + 0.4 * Math.max(0, (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / nl);
+    out.push({ s: s, z: s.reduce(function (acc, q) { return acc + q[2]; }, 0) / s.length, c: f.c, k: lit });
+  });
+  out.sort(function (a, b) { return b.z - a.z; });
+  out.forEach(function (f) {
+    c.beginPath(); f.s.forEach(function (q, i) { if (i) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); }); c.closePath();
+    c.fillStyle = "rgb(" + Math.round(f.c[0] * f.k) + "," + Math.round(f.c[1] * f.k) + "," + Math.round(f.c[2] * f.k) + ")"; c.fill();
+    c.strokeStyle = "rgba(0,0,0,.2)"; c.lineWidth = 0.75; c.stroke();
+  });
+};
+
+function drawPhone(st, P, K) {
+  if (!st.begin()) return;
+  var gz = -1.15, M = mmul(rotZ(P.yaw * D2R), mmul(rotX(P.pitch * D2R), rotY(P.roll * D2R)));
+  st.grid(gz, 1.5);
+  var body = box([-.46, -.95, -.05], [.46, .95, .05], K.body, M);
+  st.shadow(body, gz);
+  st.faces(body);
+  // Parts sit on the body's surface, so they are drawn after it, and only on the side the camera can see
+  if (st.facing(body[1])) st.faces(box([-.41, -.87, .05], [.41, .87, .062], K.screen, M).concat(box([-.12, .79, .062], [.12, .84, .07], K.body, M)));  // screen + earpiece (top edge)
+  else st.faces(box([-.4, .5, -.085], [-.08, .86, -.05], K.cam, M));                                                                                 // camera bump on the back
+}
+function drawRig(st, P, K, M) {
+  if (!st.begin()) return;
+  var Pz = rotZ((P.pan - 90) * D2R), Tm = mmul(Pz, rotX((P.tilt - 90) * D2R)), piv = [0, 0, 1.25];
+  st.grid(0, 1.5);
+  // The camera is always above the parts, so stacked layers are painted bottom-up; the top layer is sorted far-to-near per part
+  st.faces(box([-.8, -.8, 0], [.8, .8, .18], K.base));
+  var arc = [];
+  for (var a = M.pmin; a <= M.pmax + 1e-6; a += 3) { var r = (a - 90) * D2R; arc.push([-Math.sin(r) * .76, Math.cos(r) * .76, .19]); }
+  st.line(arc, css("--muted"), 1.5, [4, 3]);
+  st.faces(box([-.3, -.38, .18], [.3, .38, .6], K.metal, Pz));   // pan servo
+  st.faces(box([-.5, -.5, .6], [.5, .5, .67], K.bracket, Pz));   // turntable
+  [box([-.64, -.13, .67], [-.55, .13, 1.45], K.bracket, Pz),     // U-bracket
+   box([.55, -.13, .67], [.64, .13, 1.45], K.bracket, Pz),
+   box([.64, -.2, 1.05], [.82, .2, 1.45], K.metal, Pz),          // tilt servo
+   box([-.48, -.42, -.22], [.48, .38, .22], K.head, Tm, piv),    // camera head
+   box([-.15, .38, -.15], [.15, .58, .15], K.screen, Tm, piv)]   // lens
+    .map(function (b) { return { b: b, z: st.depth(b) }; }).sort(function (x, y) { return y.z - x.z; })
+    .forEach(function (o) { st.faces(o.b); });
+  var dir = function (pan, tilt) { return mvec(mmul(rotZ((pan - 90) * D2R), rotX((tilt - 90) * D2R)), [0, 1, 0]); };
+  var at = function (d, k) { return [piv[0] + d[0] * k, piv[1] + d[1] * k, piv[2] + d[2] * k]; };
+  if (isFinite(P.tPan) && isFinite(P.tTilt)) { var dt = dir(P.tPan, P.tTilt); st.line([at(dt, .6), at(dt, 2.6)], css("--raw"), 1.5, [5, 4]); }
+  var dc = dir(P.pan, P.tilt); st.line([at(dc, .6), at(dc, 2.8)], css("--s1"), 2.5);
+}
+
+// Value at time t: linear (wrap-aware for ±180° angles) or held from the previous sample
+function tIndex(xs, t) { var lo = 0, hi = xs.length - 1; while (hi - lo > 1) { var m = (lo + hi) >> 1; if (xs[m] <= t) lo = m; else hi = m; } return [lo, hi]; }
+function sampleAt(t, xs, ys, wrap) {
+  var n = xs.length; if (!n) return NaN; if (t <= xs[0]) return ys[0]; if (t >= xs[n - 1]) return ys[n - 1];
+  var k = tIndex(xs, t), f = (t - xs[k[0]]) / (xs[k[1]] - xs[k[0]]), d = ys[k[1]] - ys[k[0]];
+  return wrap ? wrap180(ys[k[0]] + wrap180(d) * f) : ys[k[0]] + d * f;
+}
+function holdAt(t, xs, ys) { var n = xs.length; if (!n) return NaN; if (t >= xs[n - 1]) return ys[n - 1]; return t <= xs[0] ? ys[0] : ys[tIndex(xs, t)[0]]; }
+function poseAt(t) {
+  var d = DATA, R = LAST.R;
+  return { roll: sampleAt(t, d.t, d.roll, true), pitch: sampleAt(t, d.t, d.pitch), yaw: sampleAt(t, d.t, d.yaw, true),
+    pan: sampleAt(t, R.servo.t, R.servo.pan), tilt: sampleAt(t, R.servo.t, R.servo.tilt),
+    tPan: holdAt(t, d.t, R.panTarget), tTilt: holdAt(t, d.t, R.tiltTarget) };
+}
+
+var ANIM = { t: null, playing: false, touched: false, last: 0, chartAt: 0, visible: true, seeking: false, disp: null, sig: "" };
+var ST = { phone: new Stage("#cvPhone", { az: 0.6, el: 0.45, cz: -0.3, k: 0.36 }), rig: new Stage("#cvRig", { az: 0.65, el: 0.3, cz: 0.95, k: 0.3 }) };
+function setPlaying(on) { ANIM.playing = on; if (on) ANIM.touched = true; $("#aPlay").textContent = on ? "⏸ Pause" : "▶ Play"; }
+$("#aPlay").addEventListener("click", function () { setPlaying(!ANIM.playing); });
+$("#aSeek").addEventListener("pointerdown", function () { ANIM.seeking = true; });
+["pointerup", "change"].forEach(function (ev) { $("#aSeek").addEventListener(ev, function () { ANIM.seeking = false; }); });
+$("#aSeek").addEventListener("input", function () { var rg = VIEW || FULL; ANIM.t = rg[0] + (+this.value) / 1000 * (rg[1] - rg[0]); ANIM.touched = true; });
+if (window.IntersectionObserver) new IntersectionObserver(function (es) { ANIM.visible = es[0].isIntersecting; }).observe($("#w-anim"));
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setPlaying(true);
+
+function animFrame(now) {
+  requestAnimationFrame(animFrame);
+  var dt = Math.min(0.1, (now - (ANIM.last || now)) / 1000); ANIM.last = now;
+  var live = LIVE.on && LIVE.rows.length > 0, P, t = null, rg = VIEW || FULL;
+  if (live) {
+    var r = LIVE.rows[LIVE.rows.length - 1], a = 1 - Math.exp(-dt * 12);
+    P = { roll: r[1], pitch: r[2], yaw: r[3], pan: r[8], tilt: r[9], tPan: r[6], tTilt: r[7] };
+    if (!ANIM.disp) ANIM.disp = P;
+    else {                                                   // ease between 10 Hz samples so the models do not jump
+      var D = ANIM.disp;
+      ["pitch", "pan", "tilt", "tPan", "tTilt"].forEach(function (k) { D[k] += (P[k] - D[k]) * a; });
+      ["roll", "yaw"].forEach(function (k) { D[k] = wrap180(D[k] + wrap180(P[k] - D[k]) * a); });
+    }
+    P = ANIM.disp;
+    if (PLAYHEAD != null) { PLAYHEAD = null; redraw(); }
+  } else {
+    ANIM.disp = null;
+    if (!DATA || !LAST) return;
+    if (ANIM.t == null || ANIM.t < rg[0] || ANIM.t > rg[1]) ANIM.t = rg[0];
+    if (ANIM.playing && HOVER == null && !ANIM.seeking && ANIM.visible) { ANIM.t += dt * +$("#aSpeed").value; if (ANIM.t > rg[1]) ANIM.t = rg[0]; }
+    t = HOVER != null ? HOVER : ANIM.t;
+    P = poseAt(t);
+    if (ANIM.touched && PLAYHEAD !== ANIM.t && now - ANIM.chartAt > 100) { PLAYHEAD = ANIM.t; ANIM.chartAt = now; redraw(); }
+  }
+  if (!ANIM.visible || document.hidden || $("#w-anim").classList.contains("min")) return;
+  var K = { body: rgbOf("--m-body"), screen: rgbOf("--m-screen"), cam: rgbOf("--m-cam"), base: rgbOf("--m-base"), metal: rgbOf("--m-metal"), bracket: rgbOf("--m-bracket"), head: rgbOf("--m-head") };
+  var M = LAST ? LAST.R._M : toModel(readParams());
+  var sig = [P.roll, P.pitch, P.yaw, P.pan, P.tilt, P.tPan, P.tTilt].map(function (v) { return fmt(v, 2); }).join() + "|" +
+    [ST.phone.v.az, ST.phone.v.el, ST.rig.v.az, ST.rig.v.el, ST.phone.cv.clientWidth, ST.rig.cv.clientWidth, K.body, K.base, M.pmin, M.pmax, t, live].join();
+  if (sig === ANIM.sig) return;                             // nothing moved: skip the redraw
+  ANIM.sig = sig;
+  drawPhone(ST.phone, P, K); drawRig(ST.rig, P, K, M);
+  $("#roPhone").innerHTML = ["roll", "pitch", "yaw"].map(function (k) { return '<span><i class="sw" style="border-top-color:' + css(AX[k].c) + '"></i>' + AX[k].name + ' <b>' + fmt(P[k], 1) + '°</b></span>'; }).join("");
+  $("#roRig").innerHTML = '<span>Pan <b>' + fmt(P.pan, 0) + '°</b><small>target ' + fmt(P.tPan, 0) + '°</small></span><span>Tilt <b>' + fmt(P.tilt, 0) + '°</b><small>target ' + fmt(P.tTilt, 0) + '°</small></span>';
+  $("#aMode").textContent = live ? "● LIVE" : HOVER != null ? "Hover" : "Replay"; $("#aMode").classList.toggle("live", live);
+  $("#aPlay").disabled = $("#aSeek").disabled = live;
+  if (!live) {
+    $("#aTime").textContent = fmt(t, 1) + " / " + fmt(rg[1], 1) + " s";
+    if (!ANIM.seeking) $("#aSeek").value = Math.round((ANIM.t - rg[0]) / (rg[1] - rg[0] || 1) * 1000);
+  } else $("#aTime").textContent = "t = " + fmt(LIVE.rows[LIVE.rows.length - 1][0] / 1000, 1) + " s";
+}
+requestAnimationFrame(animFrame);
+
 /* ================= Loading ================= */
 function useData(raw, source) {
   if (LIVE.on) liveStop();
@@ -1095,7 +1351,7 @@ $("#btnRepo").addEventListener("click", function () { loadRepo($("#repoPath").va
 /* ================= Live mode: Web Serial (USB) =================
    Reads lines printed by the ESP32-S3 firmware:  D,t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt
    Other Serial output (boot messages etc.) is ignored. Needs Chrome or Edge on a computer, over HTTPS or localhost. */
-var LIVE = { port: null, reader: null, closed: null, on: false, rows: [], dirty: false, bad: 0, timer: null, lastRx: 0 };
+var LIVE = { port: null, reader: null, closed: null, on: false, rows: [], dirty: false, bad: 0, timer: null, lastRx: 0, lastAny: 0, other: 0, lastOther: "" };
 var LIVE_HEAD = "t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt";
 if (!("serial" in navigator)) {
   $("#btnLive").disabled = true;
@@ -1103,7 +1359,9 @@ if (!("serial" in navigator)) {
 }
 function liveLine(line) {
   line = line.trim();
-  if (line.indexOf("D,") !== 0) return;
+  if (!line) return;
+  LIVE.lastAny = Date.now();
+  if (line.indexOf("D,") !== 0) { LIVE.other++; LIVE.lastOther = line.slice(0, 70); return; }
   var v = line.slice(2).split(",").map(Number);
   if (v.length !== 10 || v.some(function (x) { return !isFinite(x); })) { LIVE.bad++; return; }
   var prev = LIVE.rows[LIVE.rows.length - 1];
@@ -1113,7 +1371,12 @@ function liveLine(line) {
 }
 function liveRender() {
   var info = LIVE.rows.length + " rows" + (LIVE.bad ? " · " + LIVE.bad + " bad line(s)" : "");
-  if (LIVE.on && Date.now() - LIVE.lastRx > 2000) info += " · no data for " + Math.round((Date.now() - LIVE.lastRx) / 1000) + " s (is the phone connected and the board in AUTO mode?)";
+  var now = Date.now(), quiet = Math.round((now - LIVE.lastRx) / 1000);
+  if (LIVE.on && now - LIVE.lastAny > 3000)
+    info += " · no Serial text at all for " + Math.round((now - LIVE.lastAny) / 1000) + " s. Check the USB cable and port (on the ESP32-S3-DevKitM-1 use the port marked UART), then press RESET on the board.";
+  else if (LIVE.on && !LIVE.rows.length && LIVE.other)
+    info += ' · Serial text arrives but no "D," data lines yet (last line: "' + LIVE.lastOther + '"). Either the phone is not sending (phyphox running with Remote access on, phone joined to the ESP32-S3 Wi-Fi, board in AUTO mode) or the board runs firmware without the data log: only esp32-smartphone-control-APkm.cpp (pio env ap-dashboard-kalman) prints it.';
+  else if (LIVE.on && now - LIVE.lastRx > 2000) info += " · no data for " + quiet + " s (is the phone connected and the board in AUTO mode?)";
   $("#liveInfo").textContent = info;
   if (!LIVE.dirty || LIVE.rows.length < 10) return;
   LIVE.dirty = false;
@@ -1132,7 +1395,7 @@ async function liveStart() {
   try {
     var port = await navigator.serial.requestPort();      // user picks the port; nothing is opened without that
     await port.open({ baudRate: 115200 });
-    LIVE.port = port; LIVE.on = true; LIVE.rows = []; LIVE.bad = 0; LIVE.lastRx = Date.now(); VIEW = null;
+    LIVE.port = port; LIVE.on = true; LIVE.rows = []; LIVE.bad = 0; LIVE.other = 0; LIVE.lastOther = ""; LIVE.lastRx = LIVE.lastAny = Date.now(); VIEW = null;
     $("#btnLive").disabled = true; $("#btnStop").disabled = false; $("#btnSaveLive").disabled = false;
     LIVE.timer = setInterval(liveRender, 250);
     var dec = new TextDecoderStream();
