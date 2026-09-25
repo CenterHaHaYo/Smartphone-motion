@@ -243,6 +243,7 @@ void readSmartphoneMotion() {
 
   HTTPClient http;
   http.begin(motionURL);
+  http.setConnectTimeout(300);   // default is 5 s: a sleeping phone would freeze the servos and the dashboard
   http.setTimeout(500);
 
   int httpCode = http.GET();

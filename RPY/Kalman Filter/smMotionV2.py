@@ -7,8 +7,8 @@ import os, csv, datetime
 # ═══════════════════════════════════════════════════════════════════
 #  CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════
-# URL         = "http://172.20.10.1"
-URL = "http://192.168.1.43:8080"
+URL         = "http://172.20.10.1:8080"  # iPhone hotspot
+# URL = "http://192.168.1.43:8080"
 SAMPLE_RATE = 30
 DT          = 1.0 / SAMPLE_RATE
 BUFFER_SIZE = 128       # FFT window ≈ 4.3 s → Δf ≈ 0.23 Hz
@@ -477,7 +477,7 @@ while True:
             round(t_now, 4),
             round(k_roll,  2),
             round(k_pitch, 2),
-            round(k_roll,   2),
+            round(k_yaw,   2),
             round(pitch_s, 2),
             round(roll_s,  2),
             round(yaw_s,   2),

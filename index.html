@@ -155,7 +155,8 @@
   @media (max-width: 700px) { .anim { grid-template-columns: minmax(0, 1fr); } }
   .stage { margin: 0; background: var(--card-2); border-radius: 10px; padding: 8px 10px 10px; min-width: 0; }
   .stage figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
-  .stage figcaption span { color: var(--muted); font-size: 12px; text-align: right; }
+  .stage figcaption span, .stage figcaption label { color: var(--muted); font-size: 12px; text-align: right; }
+  .stage figcaption select { font: inherit; font-size: 12px; padding: 1px 4px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
   .stage canvas { display: block; width: 100%; height: 280px; cursor: grab; touch-action: pan-y; }
   .readout { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; min-height: 20px; }
   .readout span { display: inline-flex; align-items: center; gap: 5px; }
@@ -325,7 +326,7 @@
       <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Motion view — smartphone and pan-tilt platform</span><span class="step">3D</span><button type="button" data-min aria-label="Minimize">–</button></div>
       <div class="wbody">
         <div class="anim">
-          <figure class="stage"><figcaption><b>Smartphone</b><span>raw Roll · Pitch · Yaw</span></figcaption>
+          <figure class="stage"><figcaption><b>Smartphone</b><label>held <select id="aHold" aria-label="How the phone is held"><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label></figcaption>
             <canvas id="cvPhone" role="img" aria-label="3D smartphone turned by the recorded roll, pitch and yaw"></canvas>
             <div class="readout" id="roPhone"></div></figure>
           <figure class="stage"><figcaption><b>Pan-tilt platform</b><span>servo command after the pipeline</span></figcaption>
@@ -339,7 +340,7 @@
           <select id="aSpeed" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
           <span class="amode" id="aMode">Replay</span>
         </div>
-        <p class="wnote">Solid blue ray = where the camera points (servo command). Dashed ray = the target before the rate limiter, so the gap between the two is the lag the pipeline adds. The dashed arc on the base is the allowed pan range.
+        <p class="wnote">Both views look from behind you, facing <b>front</b>. <b>Pitch</b> tips the phone forward/back (nose down/up) and drives <b>Tilt</b>; <b>Yaw</b> turns it left/right and drives <b>Pan</b>; <b>Roll</b> tips it sideways and is not used. Solid blue ray = where the camera points (servo command). Dashed ray = the target before the rate limiter, so the gap between the two is the lag the pipeline adds. The dashed arc on the base is the allowed pan range.
           Hover any chart to show that moment here. Drag a 3D view to turn it; double-click to reset. In live mode both models follow the board in real time.</p>
       </div>
     </div>
@@ -1182,6 +1183,7 @@ Stage.prototype.grid = function (z, r) {
   this.line([[0, r - 0.3, z], [0, r + 0.25, z]], m, 1.5); this.line([[-0.12, r + 0.08, z], [0, r + 0.25, z], [0.12, r + 0.08, z]], m, 1.5);
   var s = this.p([0, r + 0.45, z]); this.ctx.fillStyle = m; this.ctx.font = "11px -apple-system, Segoe UI, Roboto, sans-serif";
   this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle"; this.ctx.fillText("front", s[0], s[1]);
+  s = this.p([0, -r - 0.35, z]); this.ctx.fillText("you", s[0], s[1]);
 };
 Stage.prototype.shadow = function (faces, z) {
   var self = this, pts = [];
@@ -1215,16 +1217,20 @@ Stage.prototype.faces = function (list) {
   });
 };
 
+// Pitch always tips the phone about the left-right axis (forward/back) and roll about the front axis,
+// whichever way the phone is held; "held" only changes which way its long side lies.
 function drawPhone(st, P, K) {
   if (!st.begin()) return;
   var gz = -1.15, M = mmul(rotZ(P.yaw * D2R), mmul(rotX(P.pitch * D2R), rotY(P.roll * D2R)));
+  var L = HOLD === "landscape", xy = function (a) { return L ? [-a[1], a[0], a[2]] : a; };   // landscape: long side left-right, top edge on the left
+  var part = function (a, b, col) { var p = xy(a), q = xy(b); return box([Math.min(p[0], q[0]), Math.min(p[1], q[1]), a[2]], [Math.max(p[0], q[0]), Math.max(p[1], q[1]), b[2]], col, M); };
   st.grid(gz, 1.5);
-  var body = box([-.46, -.95, -.05], [.46, .95, .05], K.body, M);
+  var body = part([-.46, -.95, -.05], [.46, .95, .05], K.body);
   st.shadow(body, gz);
   st.faces(body);
   // Parts sit on the body's surface, so they are drawn after it, and only on the side the camera can see
-  if (st.facing(body[1])) st.faces(box([-.41, -.87, .05], [.41, .87, .062], K.screen, M).concat(box([-.12, .79, .062], [.12, .84, .07], K.body, M)));  // screen + earpiece (top edge)
-  else st.faces(box([-.4, .5, -.085], [-.08, .86, -.05], K.cam, M));                                                                                 // camera bump on the back
+  if (st.facing(body[1])) st.faces(part([-.41, -.87, .05], [.41, .87, .062], K.screen).concat(part([-.12, .79, .062], [.12, .84, .07], K.body)));  // screen + earpiece (top edge)
+  else st.faces(part([-.4, .5, -.085], [-.08, .86, -.05], K.cam));                                                                                 // camera bump on the back
 }
 function drawRig(st, P, K, M) {
   if (!st.begin()) return;
@@ -1266,7 +1272,11 @@ function poseAt(t) {
 }
 
 var ANIM = { t: null, playing: false, touched: false, last: 0, chartAt: 0, visible: true, seeking: false, disp: null, sig: "" };
-var ST = { phone: new Stage("#cvPhone", { az: 0.6, el: 0.45, cz: -0.3, k: 0.36 }), rig: new Stage("#cvRig", { az: 0.65, el: 0.3, cz: 0.95, k: 0.3 }) };
+var ST = { phone: new Stage("#cvPhone", { az: 0.28, el: 0.62, cz: -0.3, k: 0.36 }), rig: new Stage("#cvRig", { az: 0.28, el: 0.32, cz: 0.95, k: 0.3 }) };
+var HOLD = "portrait";
+try { HOLD = localStorage.getItem("ptl-hold") || HOLD; } catch (e) {}
+$("#aHold").value = HOLD;
+$("#aHold").addEventListener("change", function () { HOLD = this.value; ANIM.sig = ""; try { localStorage.setItem("ptl-hold", HOLD); } catch (e) {} });
 function setPlaying(on) { ANIM.playing = on; if (on) ANIM.touched = true; $("#aPlay").textContent = on ? "⏸ Pause" : "▶ Play"; }
 $("#aPlay").addEventListener("click", function () { setPlaying(!ANIM.playing); });
 $("#aSeek").addEventListener("pointerdown", function () { ANIM.seeking = true; });
@@ -1303,7 +1313,7 @@ function animFrame(now) {
   var K = { body: rgbOf("--m-body"), screen: rgbOf("--m-screen"), cam: rgbOf("--m-cam"), base: rgbOf("--m-base"), metal: rgbOf("--m-metal"), bracket: rgbOf("--m-bracket"), head: rgbOf("--m-head") };
   var M = LAST ? LAST.R._M : toModel(readParams());
   var sig = [P.roll, P.pitch, P.yaw, P.pan, P.tilt, P.tPan, P.tTilt].map(function (v) { return fmt(v, 2); }).join() + "|" +
-    [ST.phone.v.az, ST.phone.v.el, ST.rig.v.az, ST.rig.v.el, ST.phone.cv.clientWidth, ST.rig.cv.clientWidth, K.body, K.base, M.pmin, M.pmax, t, live].join();
+    [HOLD, ST.phone.v.az, ST.phone.v.el, ST.rig.v.az, ST.rig.v.el, ST.phone.cv.clientWidth, ST.rig.cv.clientWidth, K.body, K.base, M.pmin, M.pmax, t, live].join();
   if (sig === ANIM.sig) return;                             // nothing moved: skip the redraw
   ANIM.sig = sig;
   drawPhone(ST.phone, P, K); drawRig(ST.rig, P, K, M);
