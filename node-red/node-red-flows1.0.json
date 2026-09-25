@@ -1,0 +1,1316 @@
+[
+    {
+        "id": "1934d6b760a697cb",
+        "type": "tab",
+        "label": "Smartphone Motion Lab",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "broker1",
+        "type": "mqtt-broker",
+        "name": "Local Broker",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 15,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "ui_tab_motion",
+        "type": "ui_tab",
+        "name": "Motion Dashboard",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ui_group_motion",
+        "type": "ui_group",
+        "name": "Phone Orientation",
+        "tab": "ui_tab_motion",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "group1",
+        "type": "ui_group",
+        "name": "IMU Dashboard",
+        "tab": "",
+        "order": 1,
+        "width": "6"
+    },
+    {
+        "id": "1cbabb05fed435ed",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "0af0bd707a058c36",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost:1883",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "3c8ecdf59eafca83",
+        "type": "ui_group",
+        "name": "Controls",
+        "tab": "",
+        "order": 2,
+        "width": "6"
+    },
+    {
+        "id": "ui_group_combined",
+        "type": "ui_group",
+        "name": "Phone Orientation & Analysis",
+        "tab": "",
+        "order": 1,
+        "width": "12"
+    },
+    {
+        "id": "broker_combined",
+        "type": "mqtt-broker",
+        "name": "Local Broker",
+        "broker": "localhost",
+        "port": "1883"
+    },
+    {
+        "id": "151cabbefba6503b",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost:1883",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "1820774e090f917e",
+        "type": "ui_group",
+        "name": "Real-Time Graphs",
+        "tab": "ui_tab_motion",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "b827c8afa4cce7a1",
+        "type": "ui_group",
+        "name": "FFT Spectrum",
+        "tab": "ui_tab_motion",
+        "order": 3,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "d7663aaf.47194",
+        "type": "arduino-board",
+        "device": "COM3",
+        "name": "Led-Test-board",
+        "samplingInt": "500",
+        "log2consol": true
+    },
+    {
+        "id": "3d688cb5847397e2",
+        "type": "arduino-board",
+        "device": "COM3",
+        "name": "",
+        "samplingInt": "19",
+        "log2consol": true
+    },
+    {
+        "id": "3b6bd33cc95403ae",
+        "type": "arduino-board",
+        "device": "COM3",
+        "name": "",
+        "samplingInt": "19",
+        "log2consol": false
+    },
+    {
+        "id": "8452b87e46628177",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "broker.emqx.io",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "7b7a32e3ff7e6b26",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "f6b4f3d73a51d44b",
+        "type": "ui_group",
+        "name": "ESP32 Control",
+        "tab": "7b7a32e3ff7e6b26",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "1abfe58693efa403",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "6024486ebfc89f1a",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#fcfcfd",
+            "primary": "#0d74ce",
+            "bgPage": "#f9f9fb",
+            "groupBg": "#ffffff",
+            "groupOutline": "#d9d9e0"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "ea1cc911093515ee",
+        "type": "ui-page",
+        "name": "Page 1",
+        "ui": "1abfe58693efa403",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "6024486ebfc89f1a",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": 0,
+                "cols": 3
+            },
+            {
+                "name": "Tablet",
+                "px": 576,
+                "cols": 6
+            },
+            {
+                "name": "Small Desktop",
+                "px": 768,
+                "cols": 9
+            },
+            {
+                "name": "Desktop",
+                "px": 1024,
+                "cols": 12
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "227b34f45b69cbe9",
+        "type": "ui-group",
+        "name": "Group 1",
+        "page": "ea1cc911093515ee",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": true,
+        "disabled": false,
+        "groupType": "default"
+    },
+    {
+        "id": "5c647a5c5f7e16b7",
+        "type": "inject",
+        "z": "1934d6b760a697cb",
+        "name": "Poll every 0.2s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "0.2",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 100,
+        "wires": [
+            [
+                "337b29a9fd722040"
+            ]
+        ]
+    },
+    {
+        "id": "337b29a9fd722040",
+        "type": "http request",
+        "z": "1934d6b760a697cb",
+        "name": "GET pitch roll yaw",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://192.168.1.35:8080/get?pitch&roll&yaw",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 380,
+        "y": 100,
+        "wires": [
+            [
+                "db1820c2d8a2bb16"
+            ]
+        ]
+    },
+    {
+        "id": "db1820c2d8a2bb16",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Extract + radians + axis/up",
+        "func": "try {\n    let data = msg.payload;\n\n    let pitchDeg = data.buffer.pitch.buffer[0];\n    let rollDeg  = data.buffer.roll.buffer[0];\n    let yawDeg   = data.buffer.yaw.buffer[0];\n\n    let pitch = pitchDeg * Math.PI / 180;\n    let roll  = rollDeg  * Math.PI / 180;\n    let yaw   = yawDeg   * Math.PI / 180;\n\n    let axis_x = Math.cos(yaw) * Math.cos(pitch);\n    let axis_y = Math.sin(pitch);\n    let axis_z = Math.sin(yaw) * Math.cos(pitch);\n\n    let up_x = -Math.sin(roll);\n    let up_y =  Math.cos(roll);\n    let up_z = 0;\n\n    msg.pitchDeg = pitchDeg;\n    msg.rollDeg  = rollDeg;\n    msg.yawDeg   = yawDeg;\n    msg.pitch    = pitch;\n    msg.roll     = roll;\n    msg.yaw      = yaw;\n    msg.axis_x   = axis_x;\n    msg.axis_y   = axis_y;\n    msg.axis_z   = axis_z;\n    msg.up_x     = up_x;\n    msg.up_y     = up_y;\n    msg.up_z     = up_z;\n\n    msg.payload = {\n        pitchDeg: pitchDeg, rollDeg: rollDeg, yawDeg: yawDeg,\n        pitch: pitch, roll: roll, yaw: yaw,\n        axis_x: axis_x, axis_y: axis_y, axis_z: axis_z,\n        up_x: up_x, up_y: up_y, up_z: up_z\n    };\n\n    return msg;\n} catch(err) {\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 320,
+        "y": 200,
+        "wires": [
+            [
+                "2bd89d825a6d1d42",
+                "792777de4f64de04",
+                "ff7aac48c042afdc",
+                "e91ff222ca3b1b90",
+                "0dab2298fea2fc1e",
+                "bf9ceaf143cd8b3b",
+                "c3b37701cd074cb3",
+                "d96f8cd159cf27c0",
+                "afe036035c7a7f74",
+                "dd5c36dcaf7f204b",
+                "cfb077e3199b5087",
+                "f34b2bf2184366cc",
+                "521c10bd9c9932e7",
+                "a908d2180de35828"
+            ]
+        ]
+    },
+    {
+        "id": "2bd89d825a6d1d42",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Pitch deg",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "pitchDeg",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 40,
+        "wires": [
+            [
+                "f5c90ddcf293615b"
+            ]
+        ]
+    },
+    {
+        "id": "792777de4f64de04",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Roll deg",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "rollDeg",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 80,
+        "wires": [
+            [
+                "51e705bd15de2cdf"
+            ]
+        ]
+    },
+    {
+        "id": "ff7aac48c042afdc",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Yaw deg",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "yawDeg",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 120,
+        "wires": [
+            [
+                "7619876a66ab2d95"
+            ]
+        ]
+    },
+    {
+        "id": "e91ff222ca3b1b90",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Pitch rad",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "pitch",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 160,
+        "wires": [
+            [
+                "3a9273e3b5580735"
+            ]
+        ]
+    },
+    {
+        "id": "0dab2298fea2fc1e",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Roll rad",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "roll",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 200,
+        "wires": [
+            [
+                "e406a1d3b3137281"
+            ]
+        ]
+    },
+    {
+        "id": "bf9ceaf143cd8b3b",
+        "type": "change",
+        "z": "1934d6b760a697cb",
+        "name": "Yaw rad",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "yaw",
+                "tot": "msg"
+            }
+        ],
+        "x": 900,
+        "y": 240,
+        "wires": [
+            [
+                "0bb9833da62dd318"
+            ]
+        ]
+    },
+    {
+        "id": "c3b37701cd074cb3",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Axis text",
+        "func": "msg.payload = `(${msg.axis_x.toFixed(3)}, ${msg.axis_y.toFixed(3)}, ${msg.axis_z.toFixed(3)})`;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 890,
+        "y": 280,
+        "wires": [
+            [
+                "079d1c0adaf115c2"
+            ]
+        ]
+    },
+    {
+        "id": "d96f8cd159cf27c0",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Up text",
+        "func": "msg.payload = `(${msg.up_x.toFixed(3)}, ${msg.up_y.toFixed(3)}, ${msg.up_z.toFixed(3)})`;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 890,
+        "y": 320,
+        "wires": [
+            [
+                "13871d1cea1d0aed"
+            ]
+        ]
+    },
+    {
+        "id": "afe036035c7a7f74",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Status line",
+        "func": "msg.payload = `Pitch:${msg.pitch.toFixed(2)} Roll:${msg.roll.toFixed(2)} Yaw:${msg.yaw.toFixed(2)}`;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 900,
+        "y": 360,
+        "wires": [
+            [
+                "4f875fa631a327bc"
+            ]
+        ]
+    },
+    {
+        "id": "f5c90ddcf293615b",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 1,
+        "width": "4",
+        "height": "1",
+        "name": "Pitch deg",
+        "label": "Pitch (deg)",
+        "format": "{{msg.payload.toFixed(2)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "51e705bd15de2cdf",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 2,
+        "width": "4",
+        "height": "1",
+        "name": "Roll deg",
+        "label": "Roll (deg)",
+        "format": "{{msg.payload.toFixed(2)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "7619876a66ab2d95",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 3,
+        "width": "4",
+        "height": "1",
+        "name": "Yaw deg",
+        "label": "Yaw (deg)",
+        "format": "{{msg.payload.toFixed(2)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "3a9273e3b5580735",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 4,
+        "width": "4",
+        "height": "1",
+        "name": "Pitch rad",
+        "label": "Pitch (rad)",
+        "format": "{{msg.payload.toFixed(3)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "e406a1d3b3137281",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 5,
+        "width": "4",
+        "height": "1",
+        "name": "Roll rad",
+        "label": "Roll (rad)",
+        "format": "{{msg.payload.toFixed(3)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "0bb9833da62dd318",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 6,
+        "width": "4",
+        "height": "1",
+        "name": "Yaw rad",
+        "label": "Yaw (rad)",
+        "format": "{{msg.payload.toFixed(3)}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1110,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "079d1c0adaf115c2",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 7,
+        "width": "6",
+        "height": "1",
+        "name": "Axis",
+        "label": "Axis",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1100,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "13871d1cea1d0aed",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 8,
+        "width": "6",
+        "height": "1",
+        "name": "Up",
+        "label": "Up",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1100,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "4f875fa631a327bc",
+        "type": "ui_text",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "order": 9,
+        "width": "12",
+        "height": "1",
+        "name": "Status",
+        "label": "Info",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "x": 1110,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "dd5c36dcaf7f204b",
+        "type": "ui_template",
+        "z": "1934d6b760a697cb",
+        "group": "ui_group_motion",
+        "name": "Phone animation",
+        "order": 10,
+        "width": "12",
+        "height": "8",
+        "format": "<div style=\"width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff;\">\n  <div style=\"font-size:20px;font-weight:bold;margin-bottom:14px;color:#333;\">Smartphone Motion Lab</div>\n  <div style=\"perspective:1000px;width:260px;height:380px;display:flex;justify-content:center;align-items:center;\">\n    <div id=\"phone3d\" style=\"width:150px;height:280px;border-radius:24px;background:linear-gradient(180deg,#4e8df5,#2563eb);border:6px solid #173a8f;box-shadow:0 18px 34px rgba(0,0,0,0.25);position:relative;transform-style:preserve-3d;transition:transform 0.1s linear;\">\n      <div style=\"position:absolute;top:10px;left:50%;transform:translateX(-50%);width:50px;height:6px;background:#173a8f;border-radius:6px;\"></div>\n      <div style=\"position:absolute;top:26px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#173a8f;border-radius:50%;\"></div>\n      <div style=\"position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:36px;height:36px;border:3px solid rgba(255,255,255,0.85);border-radius:50%;\"></div>\n    </div>\n  </div>\n  <div style=\"margin-top:16px;text-align:center;font-size:14px;line-height:1.6;color:#333;\">\n    <div><b>Pitch:</b> {{msg.payload.pitchDeg.toFixed(2)}}°</div>\n    <div><b>Roll:</b> {{msg.payload.rollDeg.toFixed(2)}}°</div>\n    <div><b>Yaw:</b> {{msg.payload.yawDeg.toFixed(2)}}°</div>\n  </div>\n</div>\n<script>\n(function(scope){\n  scope.$watch('msg', function(msg){\n    if(!msg || !msg.payload) return;\n    var p = msg.payload.pitchDeg || 0;\n    var r = msg.payload.rollDeg || 0;\n    var y = msg.payload.yawDeg || 0;\n    var el = document.getElementById('phone3d');\n    if(el) el.style.transform = 'rotateX('+(-p)+'deg) rotateY('+y+'deg) rotateZ('+r+'deg)';\n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 190,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cfb077e3199b5087",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Extract Pitch",
+        "func": "msg.topic = \"Pitch\";\nmsg.payload = msg.pitchDeg;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 400,
+        "wires": [
+            [
+                "e12e4de31fd7f46b",
+                "f5d6ab2ea42d0245"
+            ]
+        ]
+    },
+    {
+        "id": "f34b2bf2184366cc",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Extract Roll",
+        "func": "msg.topic = \"Roll\";\nmsg.payload = msg.rollDeg;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 440,
+        "wires": [
+            [
+                "166ff4adb9762be9"
+            ]
+        ]
+    },
+    {
+        "id": "521c10bd9c9932e7",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "Extract Yaw",
+        "func": "msg.topic = \"Yaw\";\nmsg.payload = msg.yawDeg;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 480,
+        "wires": [
+            [
+                "f36e4295aa84afab"
+            ]
+        ]
+    },
+    {
+        "id": "e12e4de31fd7f46b",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "Pitch Graph",
+        "group": "1820774e090f917e",
+        "width": "12",
+        "height": "3",
+        "label": "Pitch (deg)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-180",
+        "ymax": "180",
+        "removeOlder": "30",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1a73e8",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 910,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "166ff4adb9762be9",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "Roll Graph",
+        "group": "1820774e090f917e",
+        "width": "12",
+        "height": "3",
+        "label": "Roll (deg)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-180",
+        "ymax": "180",
+        "removeOlder": "30",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e53935",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 910,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f36e4295aa84afab",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "Yaw Graph",
+        "group": "1820774e090f917e",
+        "width": "12",
+        "height": "3",
+        "label": "Yaw (deg)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-180",
+        "ymax": "180",
+        "removeOlder": "30",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#43a047",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 910,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a908d2180de35828",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Buffer (N=32, 5Hz)",
+        "func": "const N = 32;\nlet buf = context.get('buf') || { pitch: [], roll: [], yaw: [] };\n\nbuf.pitch.push(msg.pitchDeg);\nbuf.roll.push(msg.rollDeg);\nbuf.yaw.push(msg.yawDeg);\n\nif(buf.pitch.length > N) buf.pitch.shift();\nif(buf.roll.length  > N) buf.roll.shift();\nif(buf.yaw.length   > N) buf.yaw.shift();\n\ncontext.set('buf', buf);\n\nif(buf.pitch.length < N) return null;\n\nfunction dft(x) {\n    const n = x.length;\n    let mag = [];\n    for(let k = 0; k < n/2; k++) {\n        let re = 0, im = 0;\n        for(let t = 0; t < n; t++) {\n            re += x[t] * Math.cos(2*Math.PI*k*t/n);\n            im -= x[t] * Math.sin(2*Math.PI*k*t/n);\n        }\n        mag.push(Math.sqrt(re*re + im*im) / n);\n    }\n    return mag;\n}\n\nconst fs = 5;\nconst freqs = Array.from({length: N/2}, function(_,i){ return parseFloat((i*fs/N).toFixed(2)); });\n\nmsg.payload = {\n    freqs: freqs,\n    magPitch: dft(buf.pitch),\n    magRoll:  dft(buf.roll),\n    magYaw:   dft(buf.yaw)\n};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 620,
+        "wires": [
+            [
+                "b7a5102a7b323044",
+                "fft_template_all"
+            ]
+        ]
+    },
+    {
+        "id": "f5d6ab2ea42d0245",
+        "type": "debug",
+        "z": "1934d6b760a697cb",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1220,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "b7a5102a7b323044",
+        "type": "debug",
+        "z": "1934d6b760a697cb",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "fft_template_all",
+        "type": "ui_template",
+        "z": "1934d6b760a697cb",
+        "group": "b827c8afa4cce7a1",
+        "name": "FFT Charts",
+        "order": 1,
+        "width": "12",
+        "height": "14",
+        "format": "<div style=\"background:#fff;padding:10px;\">\n  <canvas id=\"fftPitchCanvas\" height=\"120\"></canvas>\n  <canvas id=\"fftRollCanvas\" height=\"120\"></canvas>\n  <canvas id=\"fftYawCanvas\" height=\"120\"></canvas>\n</div>\n<script src=\"https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js\"></script>\n<script>\n(function(scope){\n  var charts = {};\n\n  function makeChart(canvasId, label, color){\n    var ctx = document.getElementById(canvasId);\n    if(!ctx) return null;\n    return new Chart(ctx, {\n      type:'bar',\n      data:{ labels:[], datasets:[{ label:label, data:[], backgroundColor:color, borderWidth:0 }] },\n      options:{\n        responsive:true,\n        animation:false,\n        scales:{\n          x:{ title:{ display:true, text:'Frequency (Hz)' }},\n          y:{ title:{ display:true, text:'Magnitude' }, beginAtZero:true }\n        },\n        plugins:{ legend:{ display:true }}\n      }\n    });\n  }\n\n  setTimeout(function(){\n    charts.pitch = makeChart('fftPitchCanvas','FFT Pitch','rgba(26,115,232,0.7)');\n    charts.roll  = makeChart('fftRollCanvas','FFT Roll','rgba(229,57,53,0.7)');\n    charts.yaw   = makeChart('fftYawCanvas','FFT Yaw','rgba(67,160,71,0.7)');\n  }, 500);\n\n  scope.$watch('msg', function(msg){\n    if(!msg || !msg.payload || !msg.payload.freqs) return;\n    var d = msg.payload;\n    var labels = d.freqs.map(function(f){ return f.toFixed(2); });\n\n    if(charts.pitch){\n      charts.pitch.data.labels = labels;\n      charts.pitch.data.datasets[0].data = d.magPitch;\n      charts.pitch.update();\n    }\n    if(charts.roll){\n      charts.roll.data.labels = labels;\n      charts.roll.data.datasets[0].data = d.magRoll;\n      charts.roll.update();\n    }\n    if(charts.yaw){\n      charts.yaw.data.labels = labels;\n      charts.yaw.data.datasets[0].data = d.magYaw;\n      charts.yaw.update();\n    }\n  });\n})(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 710,
+        "y": 600,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fn_fft_pitch_v2",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Pitch chart fmt",
+        "func": "if (!msg.payload || !msg.payload.freqs) return null;\n\nvar freqs = msg.payload.freqs;\nvar mags  = msg.payload.magPitch;\nvar series = [];\n\nfor (var i = 0; i < freqs.length; i++) {\n    series.push({\n        \"series\": [\"Pitch\"],\n        \"data\": [mags[i]],\n        \"labels\": [freqs[i] + \" Hz\"]\n    });\n}\n\nmsg.payload = series;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 930,
+        "y": 620,
+        "wires": [
+            [
+                "ui_fft_pitch_v2"
+            ]
+        ]
+    },
+    {
+        "id": "fn_fft_roll_v2",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Roll chart fmt",
+        "func": "if (!msg.payload || !msg.payload.freqs) return null;\n\nvar freqs = msg.payload.freqs;\nvar mags  = msg.payload.magRoll;\nvar series = [];\n\nfor (var i = 0; i < freqs.length; i++) {\n    series.push({\n        \"series\": [\"Roll\"],\n        \"data\": [mags[i]],\n        \"labels\": [freqs[i] + \" Hz\"]\n    });\n}\n\nmsg.payload = series;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 930,
+        "y": 660,
+        "wires": [
+            [
+                "ui_fft_roll_v2"
+            ]
+        ]
+    },
+    {
+        "id": "fn_fft_yaw_v2",
+        "type": "function",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Yaw chart fmt",
+        "func": "if (!msg.payload || !msg.payload.freqs) return null;\n\nvar freqs = msg.payload.freqs;\nvar mags  = msg.payload.magYaw;\nvar series = [];\n\nfor (var i = 0; i < freqs.length; i++) {\n    series.push({\n        \"series\": [\"Yaw\"],\n        \"data\": [mags[i]],\n        \"labels\": [freqs[i] + \" Hz\"]\n    });\n}\n\nmsg.payload = series;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 930,
+        "y": 700,
+        "wires": [
+            [
+                "ui_fft_yaw_v2"
+            ]
+        ]
+    },
+    {
+        "id": "ui_fft_pitch_v2",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Pitch",
+        "group": "b827c8afa4cce7a1",
+        "width": "12",
+        "height": "4",
+        "label": "FFT Pitch (Hz)",
+        "chartType": "bar",
+        "legend": "false",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "Waiting for FFT data...",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "16",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1a73e8",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1140,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ui_fft_roll_v2",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Roll",
+        "group": "b827c8afa4cce7a1",
+        "width": "12",
+        "height": "4",
+        "label": "FFT Roll (Hz)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "Waiting for FFT data...",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "16",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e53935",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1140,
+        "y": 660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ui_fft_yaw_v2",
+        "type": "ui_chart",
+        "z": "1934d6b760a697cb",
+        "name": "FFT Yaw",
+        "group": "b827c8afa4cce7a1",
+        "width": "12",
+        "height": "4",
+        "label": "FFT Yaw (Hz)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "Waiting for FFT data...",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "16",
+        "removeOlderUnit": "1",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#43a047",
+            "#aec6cf",
+            "#ff7f7f",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1140,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ea877f11c7b72290",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-node-arduino": "1.4.0",
+            "@flowfuse/node-red-dashboard": "1.31.0"
+        }
+    }
+]
