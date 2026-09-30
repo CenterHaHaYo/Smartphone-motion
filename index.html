@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pan-Tilt Motion Lab</title>
+<title>Pan-Tilt Motion</title>
 <meta name="description" content="Progress dashboard and data pre-processing workbench for the ESP32-S3 + phyphox smartphone-controlled pan-tilt camera platform.">
 <style>
   :root {
@@ -99,27 +99,43 @@
   .pill.doing { color: var(--warn-ink); background: var(--warn-soft); }
   .pill.todo { color: var(--todo-ink); background: var(--todo-soft); }
  
-  /* Pipeline strip */
-  .pipe { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 14px; }
-  .pipe a { text-decoration: none; font-size: 13px; font-weight: 600; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; }
-  .pipe a span { color: var(--muted); font-weight: 700; margin-right: 4px; font-variant-numeric: tabular-nums; }
-  .pipe .ar { color: var(--muted); }
- 
-  /* Windows */
-  .desk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 900px) { .desk { grid-template-columns: minmax(0, 1fr); } }
-  .win { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; scroll-margin-top: 12px; }
-  .win.wide { grid-column: 1 / -1; }
-  .win.min .wbody { display: none; }
-  .tbar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--card-2); border-bottom: 1px solid var(--border); user-select: none; }
-  .dots { display: flex; gap: 5px; }
-  .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--axis); }
-  .tbar .ttl { font-weight: 700; font-size: 13.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tbar .step { font-family: var(--mono); font-size: 11.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }
-  .tbar button { font: inherit; font-size: 13px; line-height: 1; width: 24px; height: 22px; border-radius: 5px; border: 1px solid var(--border); background: var(--card); color: var(--text-2); cursor: pointer; }
-  .wbody { padding: 10px 12px 12px; }
-  .wnote { font-size: 13px; color: var(--text-2); margin: 8px 0 0; }
-  .wnote b { color: var(--text); }
+  /* Signal pipeline */
+  .btn:disabled { opacity: .45; cursor: default; }
+  .flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; list-style: none; margin: 0 0 20px; padding: 0; }
+  .flow li { display: flex; align-items: center; gap: 6px; }
+  .flow li + li::before { content: "→"; color: var(--muted); font-size: 13px; }
+  .flow a { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px 3px 4px; }
+  .num { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 800; font-style: normal; }
+  .step { margin: 0 0 22px; scroll-margin-top: 12px; }
+  .sh { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin: 0 0 8px; }
+  .sh h3 { font-size: 16.5px; margin: 0; }
+  .sh .num { width: 26px; height: 26px; font-size: 13px; }
+  .sh p { order: 9; flex-basis: 100%; margin: 0 0 0 36px; color: var(--muted); font-size: 13.5px; }
+  .sh .seg { margin-left: auto; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1020px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card); }
+  .seg button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 4px 11px; border: 0; background: none; color: var(--text-2); cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .kvs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .kv { display: inline-flex; gap: 6px; align-items: baseline; font-size: 12.5px; background: var(--card-2); border-radius: 6px; padding: 2px 8px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .kv i { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .fcard { display: flex; flex-direction: column; min-width: 0; }
+  .fcard.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .fhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; }
+  .fhead b { font-size: 15px; }
+  .fhead small, .fhead small a { color: var(--muted); font-size: 12px; }
+  .formula { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); margin: 4px 0 8px; }
+  .fstats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-2); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .fstats b { color: var(--text); }
+  .fcard .use { margin-top: auto; align-self: flex-start; }
+  .fcard .kvs { margin-bottom: 12px; }
+  .fcard.sel .use { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hint { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+  .hint b { color: var(--text); }
   .lg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-2); margin-bottom: 4px; min-height: 18px; }
   .lg span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { display: inline-block; width: 16px; height: 0; border-top: 2px solid; }
@@ -132,24 +148,23 @@
   .tip .h { color: var(--muted); font-size: 11.5px; }
   .tip .r { display: flex; align-items: center; gap: 6px; }
   .tip .r b { margin-left: auto; padding-left: 12px; font-weight: 700; }
- 
-  /* Controls */
-  .ctl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 1000px) { .ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 560px) { .ctl { grid-template-columns: minmax(0, 1fr); } }
-  fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0; padding: 8px 10px 10px; min-width: 0; }
-  legend { font-size: 12.5px; font-weight: 700; color: var(--text-2); padding: 0 4px; }
-  .row { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: center; font-size: 13px; margin-top: 4px; }
-  .row input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
-  .row output { font-family: var(--mono); font-size: 12.5px; color: var(--text); }
-  .chk { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 4px; }
-  .srcbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .srcbar select, .srcbar input[type=text] { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
-  .status { font-size: 13px; color: var(--text-2); background: var(--card-2); border-radius: 8px; padding: 7px 10px; margin-bottom: 12px; }
+
+  /* Data source */
+  .srcs { display: grid; grid-template-columns: 1.3fr 1fr .7fr; gap: 12px; }
+  @media (max-width: 860px) { .srcs { grid-template-columns: minmax(0, 1fr); } }
+  .src { background: var(--card-2); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .src b { font-size: 14px; display: inline-flex; align-items: center; gap: 7px; }
+  .src small { color: var(--muted); font-size: 12.5px; }
+  .src .row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--axis); }
+  .dot.on { background: var(--s8); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  @media (prefers-reduced-motion: reduce) { .dot.on { animation: none; } }
+  .status { font-size: 13px; color: var(--text-2); background: var(--card-2); border-radius: 8px; padding: 7px 10px; margin-top: 12px; }
   .status b { color: var(--text); }
-  .drop { border: 1.5px dashed var(--axis); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .drop { border: 1.5px dashed var(--axis); border-radius: 8px; padding: 10px; font-size: 13px; color: var(--muted); cursor: pointer; text-align: center; background: var(--card); }
   .drop.over { border-color: var(--accent); color: var(--accent); }
- 
+
   /* Motion view */
   .anim { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   @media (max-width: 700px) { .anim { grid-template-columns: minmax(0, 1fr); } }
@@ -168,13 +183,6 @@
   .atime { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); min-width: 96px; }
   .amode { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--todo-soft); color: var(--todo-ink); }
   .amode.live { background: var(--good-soft); color: var(--good-ink); }
- 
-  table.m { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  table.m th, table.m td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border); }
-  table.m th { font-size: 12px; color: var(--muted); font-weight: 600; border-top: none; }
-  table.m td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
-  table.m td.note { color: var(--muted); font-size: 12.5px; }
-  .tblwrap { overflow-x: auto; }
  
   pre { background: var(--card-2); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; margin: 8px 0; }
   .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
@@ -199,13 +207,12 @@
     <span class="tag">ESP32-S3 · phyphox · 2-DOF pan-tilt</span>
     <h1>Pan-Tilt Motion Lab</h1>
     <p class="lede">
-      A smartphone running phyphox streams Roll, Pitch and Yaw to an ESP32-S3, which turns them into Pan and Tilt servo angles.
-      This page tracks project progress and replays recorded motion through every data pre-processing step, one window per step.
+      Read Roll, Pitch and Yaw from a smartphone (phyphox), clean the signal with a low-pass, moving-average or Kalman filter,
+      then map it to Pan and Tilt to drive the servos of a pan-tilt FPV camera mount on an ESP32-S3.
     </p>
     <div class="btns">
-      <a class="btn primary" href="#workbench">Open the workbench</a>
+      <a class="btn primary" href="#lab">Open the signal pipeline</a>
       <a class="btn" href="#progress">Progress</a>
-      <a class="btn" href="#record">How to record data</a>
       <a class="btn" href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub repo</a>
     </div>
   </div>
@@ -236,183 +243,118 @@
   </div>
 </section>
  
-<!-- ================= WORKBENCH ================= -->
-<section id="workbench" aria-labelledby="wbh">
-  <h2 id="wbh">Data pre-processing workbench</h2>
-  <p class="sub">The same pipeline as <code>esp32-smartphone-control-APkm.cpp</code>, re-run in your browser. Change a setting and every window updates. Drag across any time chart to zoom; double-click to reset.</p>
- 
-  <nav class="pipe" aria-label="Pipeline steps">
-    <a href="#w-anim"><span>▶</span>Motion view</a><span class="ar">·</span>
-    <a href="#w-raw"><span>0</span>Raw RPY</a><span class="ar">→</span>
-    <a href="#w-time"><span>1</span>Timing &amp; gaps</a><span class="ar">→</span>
-    <a href="#w-clean"><span>2</span>Unwrap + spikes</a><span class="ar">→</span>
-    <a href="#w-kf"><span>3</span>Kalman</a><span class="ar">→</span>
-    <a href="#w-db"><span>4</span>Dead-band</a><span class="ar">→</span>
-    <a href="#w-pan"><span>5</span>Map, clamp, rate-limit</a><span class="ar">→</span>
-    <a href="#w-ws"><span>6</span>Pan-tilt output</a><span class="ar">→</span>
-    <a href="#w-metrics"><span>7</span>Metrics</a>
-  </nav>
- 
-  <div class="desk">
- 
-    <!-- Control panel -->
-    <div class="win wide" id="w-ctl">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Control panel</span><span class="step">settings</span><button type="button" data-min aria-label="Minimize">–</button></div>
-      <div class="wbody">
-        <div class="srcbar">
-          <label for="demoRate" style="font-size:13px;font-weight:600">Data:</label>
-          <button class="btn sm" type="button" id="btnDemo">Demo recording</button>
-          <select id="demoRate" aria-label="Demo sample rate">
-            <option value="10">10 Hz (ESP32 poll rate)</option>
-            <option value="30">30 Hz (Python recorder)</option>
-          </select>
+<!-- ================= SIGNAL PIPELINE ================= -->
+<section id="lab" aria-labelledby="labh">
+  <h2 id="labh">Signal pipeline</h2>
+  <p class="sub">Read Roll, Pitch and Yaw from the phone, filter the signal, then map it to Pan and Tilt to drive the servos on the FPV camera mount.</p>
+  <ol class="flow" aria-label="Steps">
+    <li><a href="#s1"><i class="num">1</i>Data</a></li>
+    <li><a href="#motion"><i class="num">▶</i>Motion</a></li>
+    <li><a href="#s2"><i class="num">2</i>Raw RPY</a></li>
+    <li><a href="#s3"><i class="num">3</i>Timing</a></li>
+    <li><a href="#s4"><i class="num">4</i>Filter</a></li>
+    <li><a href="#s5"><i class="num">5</i>Dead-band</a></li>
+    <li><a href="#s6"><i class="num">6</i>Map to Pan / Tilt</a></li>
+    <li><a href="#s7"><i class="num">7</i>FFT</a></li>
+  </ol>
+
+  <!-- 1 Data -->
+  <div class="step" id="s1">
+    <div class="sh"><span class="num">1</span><h3>Data</h3><p>Where Roll, Pitch and Yaw come from.</p></div>
+    <div class="card">
+      <div class="srcs">
+        <div class="src">
+          <b><i class="dot" id="liveDot"></i>Live from the ESP32-S3</b>
+          <small>USB cable · Chrome or Edge on a computer · close Serial Monitor first</small>
+          <div class="row">
+            <button class="btn sm primary" type="button" id="btnLive">Connect</button>
+            <button class="btn sm" type="button" id="btnStop" disabled>Stop</button>
+            <button class="btn sm" type="button" id="btnSaveLive" disabled>⬇ Save CSV</button>
+          </div>
+          <small id="liveInfo"></small>
+        </div>
+        <div class="src">
+          <b>CSV file</b>
+          <small>From “Save CSV” or the Python recorder</small>
           <label class="drop" id="drop" tabindex="0">📂 Drop a CSV here or click to choose
             <input type="file" id="file" accept=".csv,.txt,text/csv" class="sr-only">
           </label>
-          <input type="text" id="repoPath" value="data/latest.csv" aria-label="CSV path in the repo" style="width:170px">
-          <button class="btn sm" type="button" id="btnRepo">Load from repo</button>
-          <span style="flex:1"></span>
-          <label for="focus" style="font-size:13px;font-weight:600">Focus axis:</label>
-          <select id="focus"><option value="yaw">Yaw → Pan</option><option value="pitch">Pitch → Tilt</option><option value="roll">Roll</option></select>
         </div>
-        <div class="srcbar" id="liveBar">
-          <span style="font-size:13px;font-weight:600">Live from ESP32-S3 (USB):</span>
-          <button class="btn sm primary" type="button" id="btnLive">🔴 Connect &amp; start</button>
-          <button class="btn sm" type="button" id="btnStop" disabled>■ Stop</button>
-          <label for="liveWin" style="font-size:13px">Show last</label>
-          <select id="liveWin"><option value="30">30 s</option><option value="60" selected>60 s</option><option value="120">120 s</option></select>
-          <button class="btn sm" type="button" id="btnSaveLive" disabled>⬇ Save live session CSV</button>
-          <span id="liveInfo" style="font-size:13px;color:var(--muted)"></span>
-        </div>
-        <div class="status" id="status">Loading…</div>
-        <div class="srcbar">
-          <span style="font-size:13px;font-weight:600">Presets:</span>
-          <button class="btn sm" type="button" id="pFirm">Firmware (APkm) as-is</button>
-          <button class="btn sm" type="button" id="pRec">Recommended pre-processing</button>
-          <button class="btn sm" type="button" id="btnZoom">Reset zoom</button>
-          <button class="btn sm" type="button" id="btnExport">⬇ Export processed CSV</button>
-        </div>
-        <div class="ctl" id="ctl">
-          <fieldset><legend>1–2 · Cleaning</legend>
-            <label class="chk"><input type="checkbox" id="unwrap"> Unwrap yaw at ±180°</label>
-            <label class="chk"><input type="checkbox" id="hampel"> Remove spikes (Hampel filter)</label>
-            <div class="row"><label for="hk">Hampel window (past samples)</label><output id="hk_o"></output><input type="range" id="hk" min="1" max="10" step="1"></div>
-            <div class="row"><label for="hn">Spike threshold (× MAD σ)</label><output id="hn_o"></output><input type="range" id="hn" min="1.5" max="8" step="0.5"></div>
-            <div class="row"><label for="gap">Gap → filter reset (s)</label><output id="gap_o"></output><input type="range" id="gap" min="0.1" max="2" step="0.05"></div>
-          </fieldset>
-          <fieldset><legend>3 · Kalman (angle + rate)</legend>
-            <div class="row"><label for="qp">Q pan (yaw)</label><output id="qp_o"></output><input type="range" id="qp" min="-1" max="3.5" step="0.1"></div>
-            <div class="row"><label for="rp">R pan (yaw)</label><output id="rp_o"></output><input type="range" id="rp" min="-2" max="2" step="0.1"></div>
-            <div class="row"><label for="qt">Q tilt (pitch, roll)</label><output id="qt_o"></output><input type="range" id="qt" min="-1" max="3.5" step="0.1"></div>
-            <div class="row"><label for="rt">R tilt (pitch, roll)</label><output id="rt_o"></output><input type="range" id="rt" min="-2" max="2" step="0.1"></div>
-          </fieldset>
-          <fieldset><legend>4 · Dead-band &amp; input range</legend>
-            <div class="row"><label for="dbp">Pan dead-band (°)</label><output id="dbp_o"></output><input type="range" id="dbp" min="0" max="6" step="0.1"></div>
-            <div class="row"><label for="dbt">Tilt dead-band (°)</label><output id="dbt_o"></output><input type="range" id="dbt" min="0" max="8" step="0.1"></div>
-            <div class="row"><label for="yin">Yaw input ± (°)</label><output id="yin_o"></output><input type="range" id="yin" min="20" max="180" step="5"></div>
-            <div class="row"><label for="pin">Pitch input ± (°)</label><output id="pin_o"></output><input type="range" id="pin" min="10" max="90" step="5"></div>
-          </fieldset>
-          <fieldset><legend>5 · Servo limits &amp; rate</legend>
-            <div class="row"><label for="pmin">Pan min / max (°)</label><output id="pmin_o"></output><input type="range" id="pmin" min="0" max="85" step="1"><input type="range" id="pmax" min="95" max="180" step="1" aria-label="Pan max"></div>
-            <div class="row"><label for="tmin">Tilt min / max (°)</label><output id="tmin_o"></output><input type="range" id="tmin" min="0" max="85" step="1"><input type="range" id="tmax" min="95" max="180" step="1" aria-label="Tilt max"></div>
-            <div class="row"><label for="rlp">Rate limit pan / tilt (°/s)</label><output id="rlp_o"></output><input type="range" id="rlp" min="10" max="300" step="5"><input type="range" id="rlt" min="10" max="300" step="5" aria-label="Tilt rate limit"></div>
-          </fieldset>
+        <div class="src">
+          <b>Demo</b>
+          <small>60 s of made-up motion at 10 Hz</small>
+          <div class="row"><button class="btn sm" type="button" id="btnDemo">Load demo</button></div>
         </div>
       </div>
+      <div class="status" id="status">Loading…</div>
     </div>
- 
-    <!-- Motion view -->
-    <div class="win wide" id="w-anim">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Motion view — smartphone and pan-tilt platform</span><span class="step">3D</span><button type="button" data-min aria-label="Minimize">–</button></div>
-      <div class="wbody">
-        <div class="anim">
-          <figure class="stage"><figcaption><b>Smartphone</b><label>held <select id="aHold" aria-label="How the phone is held"><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label></figcaption>
-            <canvas id="cvPhone" role="img" aria-label="3D smartphone turned by the recorded roll, pitch and yaw"></canvas>
-            <div class="readout" id="roPhone"></div></figure>
-          <figure class="stage"><figcaption><b>Pan-tilt platform</b><span>servo command after the pipeline</span></figcaption>
-            <canvas id="cvRig" role="img" aria-label="3D pan-tilt platform turned by the pan and tilt servo commands"></canvas>
-            <div class="readout" id="roRig"></div></figure>
-        </div>
-        <div class="play">
-          <button class="btn sm primary" type="button" id="aPlay">▶ Play</button>
-          <input type="range" id="aSeek" min="0" max="1000" value="0" aria-label="Playback position">
-          <span class="atime" id="aTime">–</span>
-          <select id="aSpeed" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
-          <span class="amode" id="aMode">Replay</span>
-        </div>
-        <p class="wnote">Both views look from behind you, facing <b>front</b>. <b>Pitch</b> tips the phone forward/back (nose down/up) and drives <b>Tilt</b>; <b>Yaw</b> turns it left/right and drives <b>Pan</b>; <b>Roll</b> tips it sideways and is not used. Solid blue ray = where the camera points (servo command). Dashed ray = the target before the rate limiter, so the gap between the two is the lag the pipeline adds. The dashed arc on the base is the allowed pan range.
-          Hover any chart to show that moment here. Drag a 3D view to turn it; double-click to reset. In live mode both models follow the board in real time.</p>
-      </div>
-    </div>
+  </div>
 
-    <!-- 0 Raw -->
-    <div class="win wide" id="w-raw">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Raw input from phyphox — Roll, Pitch, Yaw</span><span class="step">step 0</span><button type="button" data-min aria-label="Minimize">–</button></div>
-      <div class="wbody"><div class="lg" data-lg="raw"></div><div data-chart="raw"></div>
-        <p class="wnote">Angles in degrees exactly as received from <code>/get?pitch&amp;roll&amp;yaw</code>. Shaded areas are gaps where no sample arrived.</p></div>
+  <!-- Motion -->
+  <div class="step" id="motion">
+    <div class="sh"><span class="num">▶</span><h3>Motion</h3><p>The phone turns with the raw angles; the mount turns with the servo angles from steps 4–6.</p></div>
+    <div class="card" id="w-anim">
+      <div class="anim">
+        <figure class="stage"><figcaption><b>Smartphone</b><label>held <select id="aHold" aria-label="How the phone is held"><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label></figcaption>
+          <canvas id="cvPhone" role="img" aria-label="3D smartphone turned by roll, pitch and yaw"></canvas>
+          <div class="readout" id="roPhone"></div></figure>
+        <figure class="stage"><figcaption><b>Pan-tilt FPV mount</b><span id="rigSrc">servo angles</span></figcaption>
+          <canvas id="cvRig" role="img" aria-label="3D pan-tilt mount turned by the pan and tilt servo angles"></canvas>
+          <div class="readout" id="roRig"></div></figure>
+      </div>
+      <div class="play">
+        <button class="btn sm primary" type="button" id="aPlay">▶ Play</button>
+        <input type="range" id="aSeek" min="0" max="1000" value="0" aria-label="Playback position">
+        <span class="atime" id="aTime">–</span>
+        <select id="aSpeed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+        <span class="amode" id="aMode">Replay</span>
+      </div>
+      <p class="hint">Blue ray = where the camera points. Dashed ray = target before the speed limit. Drag a view to turn it, double-click to reset.</p>
     </div>
- 
-    <!-- 1 Timing -->
-    <div class="win" id="w-time">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Sample timing — time between samples</span><span class="step">step 1</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="time"></div><div data-chart="time"></div>
-        <p class="wnote" id="n-time"></p></div>
+  </div>
+
+  <!-- 2 Raw -->
+  <div class="step" id="s2">
+    <div class="sh"><span class="num">2</span><h3>Raw Roll, Pitch, Yaw from phyphox</h3><p>Degrees, exactly as the phone sends them. Yaw drives Pan, Pitch drives Tilt, Roll is not used.</p></div>
+    <div class="card"><div class="lg" data-lg="raw"></div><div data-chart="raw"></div>
+      <p class="hint">Drag across any chart to zoom · double-click to reset · hover to see the same moment in every chart.</p></div>
+  </div>
+
+  <!-- 3 Timing -->
+  <div class="step" id="s3">
+    <div class="sh"><span class="num">3</span><h3>Sample timing</h3><p>Time between two readings. The ESP32-S3 asks the phone every <b data-k="readInterval">100</b> ms (10 Hz).</p></div>
+    <div class="card"><div class="lg" data-lg="time"></div><div data-chart="time"></div><p class="hint" id="n-time"></p></div>
+  </div>
+
+  <!-- 4 Filter -->
+  <div class="step" id="s4">
+    <div class="sh"><span class="num">4</span><h3>Filter</h3>
+      <div class="seg" role="group" aria-label="Axis"><button type="button" data-axis="yaw" aria-pressed="true">Yaw → Pan</button><button type="button" data-axis="pitch" aria-pressed="false">Pitch → Tilt</button></div>
+      <p>Three ways to smooth the signal, each with the values set in its code. Pick one to drive the servos.</p></div>
+    <div class="grid3" id="fcards"></div>
+  </div>
+
+  <!-- 5 Dead-band -->
+  <div class="step" id="s5">
+    <div class="sh"><span class="num">5</span><h3>Dead-band</h3><p>The output only moves when the filtered angle changes by more than the dead-band, so small shakes never reach the servos.</p></div>
+    <div class="card"><div class="lg" data-lg="db"></div><div data-chart="db"></div><div class="kvs" id="kv-db"></div></div>
+  </div>
+
+  <!-- 6 Map -->
+  <div class="step" id="s6">
+    <div class="sh"><span class="num">6</span><h3>Map to Pan / Tilt</h3><p>Angle range → servo range, clamped to the limits, then moved at most the max speed every <b data-k="servoInterval">20</b> ms.</p></div>
+    <div class="grid2">
+      <div class="card"><div class="fhead"><b>Yaw → Pan servo</b></div><div class="lg" data-lg="pan"></div><div data-chart="pan"></div><div class="kvs" id="kv-pan"></div></div>
+      <div class="card"><div class="fhead"><b>Pitch → Tilt servo</b></div><div class="lg" data-lg="tilt"></div><div data-chart="tilt"></div><div class="kvs" id="kv-tilt"></div></div>
     </div>
- 
-    <!-- 2 Clean -->
-    <div class="win" id="w-clean">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Unwrap + spike removal — <span data-axis>Yaw</span></span><span class="step">step 2</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="clean"></div><div data-chart="clean"></div>
-        <p class="wnote" id="n-clean"></p></div>
-    </div>
- 
-    <!-- 3 Kalman -->
-    <div class="win" id="w-kf">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Kalman filter — <span data-axis>Yaw</span></span><span class="step">step 3</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="kf"></div><div data-chart="kf"></div>
-        <p class="wnote" id="n-kf"></p></div>
-    </div>
- 
-    <!-- 4 Dead-band -->
-    <div class="win" id="w-db">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Dead-band hold — Yaw and Pitch</span><span class="step">step 4</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="db"></div><div data-chart="db"></div>
-        <p class="wnote" id="n-db"></p></div>
-    </div>
- 
-    <!-- 5 Pan -->
-    <div class="win" id="w-pan">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Pan servo — target vs. command</span><span class="step">step 5</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="pan"></div><div data-chart="pan"></div>
-        <p class="wnote" id="n-pan"></p></div>
-    </div>
- 
-    <!-- 5 Tilt -->
-    <div class="win" id="w-tilt">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Tilt servo — target vs. command</span><span class="step">step 5</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="tilt"></div><div data-chart="tilt"></div>
-        <p class="wnote" id="n-tilt"></p></div>
-    </div>
- 
-    <!-- 6 Workspace -->
-    <div class="win" id="w-ws">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Pan-tilt workspace — where the camera pointed</span><span class="step">step 6</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="ws"></div><div data-chart="ws"></div>
-        <p class="wnote">Each point is one servo command (every 20 ms). The dashed box is the allowed range. Hover here to find the same moment in the other windows.</p></div>
-    </div>
- 
-    <!-- 6b Spectrum -->
-    <div class="win" id="w-fft">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Frequency content (FFT) — <span data-axis>Yaw</span></span><span class="step">step 6</span><button type="button" data-min aria-label="Minimize">–</button><button type="button" data-max aria-label="Full width">□</button></div>
-      <div class="wbody"><div class="lg" data-lg="fft"></div><div data-chart="fft"></div>
-        <p class="wnote" id="n-fft"></p></div>
-    </div>
- 
-    <!-- 7 Metrics -->
-    <div class="win wide" id="w-metrics">
-      <div class="tbar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Metrics — In file vs. my current settings</span><span class="step">step 7</span><button type="button" data-min aria-label="Minimize">–</button></div>
-      <div class="wbody"><div class="tblwrap"><table class="m" id="metrics"></table></div></div>
-    </div>
+  </div>
+
+  <!-- 7 FFT -->
+  <div class="step" id="s7">
+    <div class="sh"><span class="num">7</span><h3>Frequency content (FFT)</h3>
+      <div class="seg" role="group" aria-label="Axis"><button type="button" data-axis="yaw" aria-pressed="true">Yaw</button><button type="button" data-axis="pitch" aria-pressed="false">Pitch</button></div>
+      <p>Which shake frequencies are in the signal, and how much the chosen filter removes.</p></div>
+    <div class="card"><div class="lg" data-lg="fft"></div><div data-chart="fft"></div><p class="hint" id="n-fft"></p></div>
   </div>
 </section>
  
@@ -432,7 +374,7 @@
  
 <footer>
   <div class="wrap">
-    Pan-Tilt Motion Lab · ESP32-S3, phyphox and two servos ·
+    Pan-Tilt Motion Lab · ESP32-S3, phyphox and a pan-tilt FPV camera mount ·
     <a href="https://github.com/CenterHaHaYo/Smartphone-motion" target="_blank" rel="noopener">GitHub</a> ·
     No external libraries — charts are drawn with plain canvas.
   </div>
@@ -477,8 +419,10 @@ var GOALS = [
   { p: "Data pre-processing", s: "done",  t: "Kalman filter comparison in Python", d: "Raw vs. filtered graphs for each axis." },
   { p: "Data pre-processing", s: "done",  t: "FFT to find shake frequency", d: "Rolling 128-sample window per axis." },
   { p: "Data pre-processing", s: "done",  t: "Record motion to CSV", d: "10-second recording from the Python tool." },
-  { p: "Data pre-processing", s: "doing", t: "Browser replay of the firmware pipeline", d: "Timing, unwrap, Hampel, Kalman, dead-band, map, rate limit." },
-  { p: "Data pre-processing", s: "todo",  t: "Timestamped CSV logging on the ESP32-S3", d: "t_ms, roll, pitch, yaw, pan, tilt over Serial." },
+  { p: "Data pre-processing", s: "done",  t: "Compare smoothing methods in the browser", d: "Low-pass (EMA), moving average and Kalman side by side on the same data." },
+  { p: "Hardware & firmware", s: "todo",  t: "Moving average on the ESP32-S3", d: "Add MA_N to the firmware so all three filters can run on the board." },
+  { p: "Data pre-processing", s: "doing", t: "Browser replay of the firmware pipeline", d: "Filter, dead-band, map and speed limit with the values read from the .cpp files." },
+  { p: "Data pre-processing", s: "done",  t: "Timestamped CSV logging on the ESP32-S3", d: "Both AP firmware files print D,… lines; this page reads them live over USB." },
   { p: "Data pre-processing", s: "todo",  t: "Fix the yaw_deg column in smMotionV2.py", d: "It currently saves roll values." },
   { p: "Data pre-processing", s: "todo",  t: "Pick filter settings from recorded sessions", d: "Compare lag vs. smoothness on several real recordings." },
   { p: "Data pre-processing", s: "todo",  t: "Raise the poll rate or filter on the phone side", d: "Avoid aliasing hand tremor at 10 Hz." }
@@ -525,46 +469,37 @@ fetch("https://api.github.com/repos/" + REPO + "/commits?per_page=6")
   })
   .catch(function () { $("#commits").innerHTML = '<li><span class="dt">—</span><span>Could not reach GitHub. See the repo for history.</span></li>'; });
  
-/* ================= Parameters ================= */
-var PRESETS = {
-  firmware: { unwrap: false, hampel: false, hk: 3, hn: 3, gap: 0.5, qp: 2, rp: 0, qt: 2, rt: 0, dbp: 1.5, dbt: 3, yin: 90, pin: 60, pmin: 15, pmax: 165, tmin: 45, tmax: 130, rlp: 60, rlt: 40 },
-  recommended: { unwrap: true, hampel: true, hk: 3, hn: 3, gap: 0.5, qp: 2, rp: 0, qt: 2, rt: 0, dbp: 1.5, dbt: 3, yin: 90, pin: 60, pmin: 15, pmax: 165, tmin: 45, tmax: 130, rlp: 60, rlt: 40 }
+/* ================= Firmware settings (read from the .cpp files) =================
+   Each filter belongs to one firmware file. The page reads the constants straight from that file
+   (GitHub Pages serves it next to this page) and falls back to this copy when it cannot be fetched. */
+var CODE = {
+  lpf: { file: "on ESP32/AP Dashboard/esp32-smartphone-control-AP.cpp", from: "copy",
+    c: { alpha: 0.10, PAN_MIN: 0, PAN_MAX: 180, TILT_MIN: 30, TILT_MAX: 150, PAN_CENTER: 90, TILT_CENTER: 90,
+         YAW_MIN_INPUT: -90, YAW_MAX_INPUT: 90, PITCH_MIN_INPUT: -45, PITCH_MAX_INPUT: 45, PAN_DEADBAND_DEG: 1.5, TILT_DEADBAND_DEG: 1.5,
+         PAN_MAX_RATE_DPS: 90, TILT_MAX_RATE_DPS: 60, servoInterval: 20, readInterval: 100 } },
+  kalman: { file: "on ESP32/AP Dashboard/esp32-smartphone-control-APkm.cpp", from: "copy",
+    c: { PAN_KF_Q: 100, TILT_KF_Q: 100, PAN_KF_R: 1, TILT_KF_R: 1, KF_MAX_GAP: 0.5, PAN_MIN: 15, PAN_MAX: 165, TILT_MIN: 45, TILT_MAX: 130,
+         PAN_CENTER: 90, TILT_CENTER: 90, YAW_MIN_INPUT: -90, YAW_MAX_INPUT: 90, PITCH_MIN_INPUT: -60, PITCH_MAX_INPUT: 60,
+         PAN_DEADBAND_DEG: 1.5, TILT_DEADBAND_DEG: 3, PAN_MAX_RATE_DPS: 60, TILT_MAX_RATE_DPS: 40, servoInterval: 20, readInterval: 100 } }
 };
-// qp/rp/qt/rt are log10 values (2 → Q = 100, 0 → R = 1, same as firmware)
-var KEYS = Object.keys(PRESETS.firmware);
-function fmtLog(v) { var x = Math.pow(10, v); return x >= 10 ? x.toFixed(0) : x >= 1 ? x.toFixed(1) : x.toFixed(2); }
-function readParams() {
-  var P = {};
-  KEYS.forEach(function (k) { var el = $("#" + k); P[k] = el.type === "checkbox" ? el.checked : +el.value; });
-  return P;
+// Moving average is not on the board yet: it uses the Kalman file's settings with an MA_N-sample window instead of the Kalman filter
+var MA_N = 5;
+var METHODS = ["lpf", "ma", "kalman"];
+var MNAME = { lpf: "Low-pass (EMA)", ma: "Moving average (SMA)", kalman: "Kalman" };
+var MSHORT = { lpf: "Low-pass", ma: "Moving average", kalman: "Kalman" };
+var MCODE = { 1: "lpf", 2: "ma", 3: "kalman" };          // last field of a "D," line from the board
+function cfg(m) { return m === "ma" ? Object.assign({}, CODE.kalman.c, { MA_N: MA_N }) : CODE[m].c; }
+function readCode(m) {
+  return fetch(encodeURI(CODE[m].file), { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw 0; return r.text(); })
+    .then(function (src) {
+      var re = /const\s+(?:int|float|double|unsigned\s+long)\s+(\w+)\s*=\s*(-?\d+(?:\.\d+)?)\s*;/g, x, n = 0;
+      while ((x = re.exec(src))) if (x[1] in CODE[m].c) { CODE[m].c[x[1]] = +x[2]; n++; }
+      if (n) CODE[m].from = "code";
+    })
+    .catch(function () {});
 }
-function toModel(P) {
-  return {
-    unwrap: P.unwrap, hampel: P.hampel, hk: P.hk, hn: P.hn, gap: P.gap,
-    Qp: Math.pow(10, P.qp), Rp: Math.pow(10, P.rp), Qt: Math.pow(10, P.qt), Rt: Math.pow(10, P.rt),
-    dbp: P.dbp, dbt: P.dbt, yin: P.yin, pin: P.pin,
-    pmin: P.pmin, pmax: P.pmax, tmin: P.tmin, tmax: P.tmax, rlp: P.rlp, rlt: P.rlt
-  };
-}
-function showOutputs() {
-  var P = readParams();
-  $("#hk_o").textContent = 2 * P.hk + 1; $("#hn_o").textContent = P.hn.toFixed(1); $("#gap_o").textContent = P.gap.toFixed(2);
-  $("#qp_o").textContent = fmtLog(P.qp); $("#rp_o").textContent = fmtLog(P.rp);
-  $("#qt_o").textContent = fmtLog(P.qt); $("#rt_o").textContent = fmtLog(P.rt);
-  $("#dbp_o").textContent = P.dbp.toFixed(1); $("#dbt_o").textContent = P.dbt.toFixed(1);
-  $("#yin_o").textContent = "±" + P.yin; $("#pin_o").textContent = "±" + P.pin;
-  $("#pmin_o").textContent = P.pmin + " / " + P.pmax; $("#tmin_o").textContent = P.tmin + " / " + P.tmax;
-  $("#rlp_o").textContent = P.rlp + " / " + P.rlt;
-  $("#hk").disabled = $("#hn").disabled = !P.hampel;
-}
-function applyPreset(p) {
-  KEYS.forEach(function (k) { var el = $("#" + k); if (el.type === "checkbox") el.checked = p[k]; else el.value = p[k]; });
-  showOutputs(); run();
-}
-KEYS.forEach(function (k) { $("#" + k).addEventListener("input", function () { showOutputs(); scheduleRun(); }); });
-$("#pFirm").addEventListener("click", function () { applyPreset(PRESETS.firmware); });
-$("#pRec").addEventListener("click", function () { applyPreset(PRESETS.recommended); });
- 
+
 /* ================= Data ================= */
 var DATA = null, SOURCE = "";
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -617,9 +552,9 @@ function parseCSV(text) {
   function find(tests) { for (var i = 0; i < tests.length; i++) for (var j = 0; j < head.length; j++) if (tests[i].test(head[j])) return j; return -1; }
   var ci = {
     t: find([/^t_ms$/, /^time_s$/, /^time \(s\)$/, /^(t|time|timestamp|millis|ms)$/, /time/]),
-    roll: find([/raw_?roll/, /^roll/, /roll/]), pitch: find([/raw_?pitch/, /^pitch/, /^(?!kf).*pitch/]), yaw: find([/raw_?yaw/, /^yaw/, /^(?!kf).*yaw/]),
+    roll: find([/raw_?roll/, /^roll/, /roll/]), pitch: find([/raw_?pitch/, /^pitch/, /^(?!kf|filt).*pitch/]), yaw: find([/raw_?yaw/, /^yaw/, /^(?!kf|filt).*yaw/]),
     pan: find([/^pan$/, /^pan_?(deg|cmd|angle|servo)$/, /^(?!.*target).*pan/]), tilt: find([/^tilt$/, /^tilt_?(deg|cmd|angle|servo)$/, /^(?!.*target).*tilt/]),
-    kfy: find([/^kf_?yaw/]), kfp: find([/^kf_?pitch/])
+    kfy: find([/^kf_?yaw/, /^filt_?yaw/]), kfp: find([/^kf_?pitch/, /^filt_?pitch/]), fc: find([/^filter$/])
   };
   if (ci.roll < 0 && ci.pitch < 0 && ci.yaw < 0) throw new Error("No roll, pitch or yaw column found. Header: " + first);
   var d = { t: [], roll: [], pitch: [], yaw: [], pan: ci.pan >= 0 ? [] : null, tilt: ci.tilt >= 0 ? [] : null,
@@ -634,6 +569,7 @@ function parseCSV(text) {
     if (d.pan) d.pan.push(get("pan")); if (d.tilt) d.tilt.push(get("tilt"));
     if (d.kfy) d.kfy.push(get("kfy")); if (d.kfp) d.kfp.push(get("kfp"));
   }
+  d.fcode = ci.fc >= 0 ? parseFloat(lines[1].split(delim)[ci.fc]) || 0 : 0;   // which firmware filter made the file
   var isMs = ci.t >= 0 && (/ms|millis/.test(head[ci.t]) || (d.t.length > 2 && (d.t[d.t.length - 1] - d.t[0]) / (d.t.length - 1) > 5));
   if (isMs) d.t = d.t.map(function (v) { return v / 1000; });
   if (ci.t < 0) d.noTime = true;
@@ -641,14 +577,14 @@ function parseCSV(text) {
   return d;
 }
  
-/* ================= Pipeline (mirrors esp32-smartphone-control-APkm.cpp) ================= */
+/* ================= Pipeline: the same steps as the firmware ================= */
 function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
- 
+
 function prep(raw) {
   // sort by time, drop duplicate timestamps
   var idx = raw.t.map(function (_, i) { return i; }).sort(function (a, b) { return raw.t[a] - raw.t[b]; });
   var o = { t: [], roll: [], pitch: [], yaw: [], pan: raw.pan ? [] : null, tilt: raw.tilt ? [] : null,
-            kfy: raw.kfy ? [] : null, kfp: raw.kfp ? [] : null, dropped: raw.dropped || 0, dup: 0 };
+            kfy: raw.kfy ? [] : null, kfp: raw.kfp ? [] : null, dropped: raw.dropped || 0, dup: 0, fcode: raw.fcode || 0 };
   var t0 = raw.keepTime ? 0 : raw.t[idx[0]], last = -Infinity;   // live mode keeps session time on the x-axis
   idx.forEach(function (i) {
     var tt = raw.t[i] - t0;
@@ -659,7 +595,6 @@ function prep(raw) {
   });
   return o;
 }
- 
 function unwrap(a) {
   var out = [a[0]], off = 0, jumps = 0;
   for (var i = 1; i < a.length; i++) {
@@ -669,20 +604,6 @@ function unwrap(a) {
   }
   return { v: out, jumps: jumps };
 }
- 
-function hampel(a, k, n) {
-  var out = a.slice(), flags = [];
-  for (var i = 0; i < a.length; i++) {
-    // Causal (trailing) window: only past samples + current, so the same code can run on the ESP32 in real time
-    var lo = Math.max(0, i - 2 * k), hi = i + 1, w = a.slice(lo, hi), med = median(w);
-    if (w.length < 3) continue;
-    var mad = median(w.map(function (x) { return Math.abs(x - med); }));
-    var sigma = Math.max(1.4826 * mad, 1.5);             // 1.5° floor so flat or slowly moving segments are not flagged
-    if (Math.abs(a[i] - med) > n * sigma) { out[i] = med; flags.push(i); }
-  }
-  return { v: out, flags: flags };
-}
- 
 function kalman(z, t, seg, q, r) {
   var out = new Array(z.length), kf = null;
   for (var i = 0; i < z.length; i++) {
@@ -700,62 +621,57 @@ function kalman(z, t, seg, q, r) {
   }
   return out;
 }
- 
+// Low-pass, like lowPassFilter() in esp32-smartphone-control-AP.cpp: y += α (x − y).
+// (The board starts at 0°; here it starts at the first reading, as if the board had been running.)
+function lowpass(z, a) { var out = [], y = z[0]; for (var i = 0; i < z.length; i++) { y += a * (z[i] - y); out.push(y); } return out; }
+// Simple moving average of the last n readings, restarted after a gap. It averages the offsets from the newest
+// reading, so a yaw window holding +179° and -179° gives ±180°, not 0° (the same code can run on the ESP32).
+function movingAvg(z, seg, n) {
+  var out = new Array(z.length), start = 0;
+  for (var i = 0; i < z.length; i++) {
+    if (seg[i]) start = i;
+    var s = 0, c = 0;
+    for (var j = Math.max(start, i - n + 1); j <= i; j++) { s += wrap180(z[j] - z[i]); c++; }
+    out[i] = z[i] + s / c;
+  }
+  return out;
+}
 function deadband(a, th) { var held = 0, out = []; for (var i = 0; i < a.length; i++) { if (Math.abs(a[i] - held) >= th) held = a[i]; out.push(held); } return out; }
 function mapClamp(x, inMin, inMax, outMin, outMax) { var v = outMin + (x - inMin) / (inMax - inMin) * (outMax - outMin); return Math.max(outMin, Math.min(outMax, v)); }
- 
-function process(d, M) {
-  var n = d.t.length, res = { n: n };
-  res.dt = d.t.map(function (v, i) { return i ? (v - d.t[i - 1]) * 1000 : NaN; });
-  res.seg = d.t.map(function (v, i) { return i === 0 || v - d.t[i - 1] > M.gap; });
-  res.gaps = [];
-  for (var i = 1; i < n; i++) if (d.t[i] - d.t[i - 1] > M.gap) res.gaps.push([d.t[i - 1], d.t[i]]);
-  var yaw = d.yaw, jumps = 0;
-  if (M.unwrap) { var u = unwrap(yaw); yaw = u.v; jumps = u.jumps; }
-  res.jumps = jumps;
-  res.clean = {}; res.spikes = {}; res.kf = {};
-  ["roll", "pitch", "yaw"].forEach(function (ax) {
-    var src = ax === "yaw" ? yaw : d[ax];
-    if (M.hampel) { var h = hampel(src, M.hk, M.hn); res.clean[ax] = h.v; res.spikes[ax] = h.flags; }
-    else { res.clean[ax] = src.slice(); res.spikes[ax] = []; }
-    var q = ax === "yaw" ? M.Qp : M.Qt, r = ax === "yaw" ? M.Rp : M.Rt;
-    res.kf[ax] = kalman(res.clean[ax], d.t, res.seg, q, r);
-  });
-  res.heldYaw = deadband(res.kf.yaw, M.dbp);
-  res.heldPitch = deadband(res.kf.pitch, M.dbt);
-  res.panTarget = res.heldYaw.map(function (x) { return mapClamp(x, -M.yin, M.yin, M.pmin, M.pmax); });
-  res.tiltTarget = res.heldPitch.map(function (x) { return mapClamp(x, -M.pin, M.pin, M.tmin, M.tmax); });
-  res.panRawMap = res.clean.yaw.map(function (x) { return mapClamp(x, -M.yin, M.yin, M.pmin, M.pmax); });
-  // Servo loop: every 20 ms, rate-limit toward the latest target, write rounded integers
-  var st = [], sp = [], stl = [], cp = 90, ct = 90, j = -1, tEnd = d.t[n - 1], writes = 0, lp = 90, lt = 90;
-  var panAtSample = new Array(n), tiltAtSample = new Array(n);
-  var tgP = 90, tgT = 90;
-  for (var tk = d.t[0]; tk <= tEnd + 1e-9; tk += 0.02) {
-    while (j + 1 < n && d.t[j + 1] <= tk) { j++; tgP = res.panTarget[j]; tgT = res.tiltTarget[j]; }
-    var dtk = 0.02;
-    cp += Math.max(-M.rlp * dtk, Math.min(M.rlp * dtk, tgP - cp));
-    ct += Math.max(-M.rlt * dtk, Math.min(M.rlt * dtk, tgT - ct));
-    var wp = Math.max(M.pmin, Math.min(M.pmax, Math.round(cp))), wt = Math.max(M.tmin, Math.min(M.tmax, Math.round(ct)));
-    if (wp !== lp || wt !== lt) { writes++; lp = wp; lt = wt; }
-    st.push(tk); sp.push(wp); stl.push(wt);
-  }
-  // command at each sample time
-  var k = 0;
-  for (i = 0; i < n; i++) { while (k + 1 < st.length && st[k + 1] <= d.t[i]) k++; panAtSample[i] = sp[k]; tiltAtSample[i] = stl[k]; }
-  res.servo = { t: st, pan: sp, tilt: stl, writes: writes };
-  res.panAtSample = panAtSample; res.tiltAtSample = tiltAtSample;
-  return res;
+function filterAxis(m, z, t, seg, c, isPan) {
+  if (m === "lpf") return lowpass(z, c.alpha);
+  if (m === "ma") return movingAvg(z, seg, c.MA_N);
+  return kalman(z, t, seg, isPan ? c.PAN_KF_Q : c.TILT_KF_Q, isPan ? c.PAN_KF_R : c.TILT_KF_R);
 }
- 
-/* ================= Metrics ================= */
+function process(d, m) {
+  var c = cfg(m), n = d.t.length, R = { m: m, c: c };
+  R.seg = d.t.map(function (v, i) { return i === 0 || v - d.t[i - 1] > (c.KF_MAX_GAP || 0.5); });   // gap → filter restarts
+  R.yaw = filterAxis(m, d.yaw, d.t, R.seg, c, true);
+  R.pitch = filterAxis(m, d.pitch, d.t, R.seg, c, false);
+  R.heldYaw = deadband(R.yaw, c.PAN_DEADBAND_DEG);
+  R.heldPitch = deadband(R.pitch, c.TILT_DEADBAND_DEG);
+  R.panTarget = R.heldYaw.map(function (x) { return mapClamp(x, c.YAW_MIN_INPUT, c.YAW_MAX_INPUT, c.PAN_MIN, c.PAN_MAX); });
+  R.tiltTarget = R.heldPitch.map(function (x) { return mapClamp(x, c.PITCH_MIN_INPUT, c.PITCH_MAX_INPUT, c.TILT_MIN, c.TILT_MAX); });
+  // Servo loop: every servoInterval ms move toward the newest target by at most MAX_RATE × dt, write whole degrees
+  var st = [], sp = [], stl = [], cp = c.PAN_CENTER, ct = c.TILT_CENTER, j = -1, gP = cp, gT = ct, dt = c.servoInterval / 1000;
+  for (var tk = d.t[0]; tk <= d.t[n - 1] + 1e-9; tk += dt) {
+    while (j + 1 < n && d.t[j + 1] <= tk) { j++; gP = R.panTarget[j]; gT = R.tiltTarget[j]; }
+    cp += Math.max(-c.PAN_MAX_RATE_DPS * dt, Math.min(c.PAN_MAX_RATE_DPS * dt, gP - cp));
+    ct += Math.max(-c.TILT_MAX_RATE_DPS * dt, Math.min(c.TILT_MAX_RATE_DPS * dt, gT - ct));
+    st.push(tk);
+    sp.push(Math.max(c.PAN_MIN, Math.min(c.PAN_MAX, Math.round(cp))));
+    stl.push(Math.max(c.TILT_MIN, Math.min(c.TILT_MAX, Math.round(ct))));
+  }
+  R.servo = { t: st, pan: sp, tilt: stl };
+  return R;
+}
+
+/* ================= Filter scores ================= */
 function mean(a) { var s = 0, c = 0; a.forEach(function (v) { if (isFinite(v)) { s += v; c++; } }); return c ? s / c : NaN; }
-function std(a) { var m = mean(a), s = 0, c = 0; a.forEach(function (v) { if (isFinite(v)) { s += (v - m) * (v - m); c++; } }); return c > 1 ? Math.sqrt(s / (c - 1)) : NaN; }
-// Robust roughness: median |2nd difference|. One wrap jump or spike does not dominate it.
 function rough(a) { var v = []; for (var i = 2; i < a.length; i++) v.push(Math.abs(a[i] - 2 * a[i - 1] + a[i - 2])); return median(v); }
-// Delay (ms) that best aligns sig with ref: compares sig(t) with ref(t - tau), tau = 0..1500 ms in 5 ms steps (linear interpolation).
-function lagMs(t, ref, sig) {
+function lagMs(t, ref, sig, step) {
   var best = 0, bestE = Infinity;
-  for (var tau = 0; tau <= 1.5; tau += 0.005) {
+  for (var tau = 0; tau <= 3; tau += step || 0.005) {
     var e = 0, c = 0, k = 0;
     for (var i = 0; i < t.length; i++) {
       var tt = t[i] - tau; if (tt < t[0]) continue;
@@ -767,25 +683,12 @@ function lagMs(t, ref, sig) {
   }
   return best * 1000;
 }
-function metrics(d, R) {
-  var dur = d.t[d.t.length - 1] - d.t[0], mdt = mean(R.dt);
-  var atLim = function (a, lo, hi) { return a.filter(function (v) { return v <= lo || v >= hi; }).length / a.length * 100; };
-  var slams = 0; for (var i = 1; i < R.panTarget.length; i++) if (Math.abs(R.panTarget[i] - R.panTarget[i - 1]) > 90) slams++;
-  var m = {
-    samples: d.t.length, dur: dur, rate: 1000 / mdt, jitter: std(R.dt), gaps: R.gaps.length, jumps: R.jumps,
-    spikes: R.spikes.roll.length + R.spikes.pitch.length + R.spikes.yaw.length,
-    // Same baseline for both columns: raw yaw unwrapped, so the wrap jump does not count as "noise"
-    yawRough: (1 - rough(R.kf.yaw) / rough(d.yaw)) * 100, pitchRough: (1 - rough(R.kf.pitch) / rough(d.pitch)) * 100,
-    lagYaw: lagMs(d.t, R.clean.yaw, R.kf.yaw),
-    lagPan: lagMs(d.t, unwrap(d.yaw).v.map(function (x) { return mapClamp(x, -R._M.yin, R._M.yin, R._M.pmin, R._M.pmax); }), R.panAtSample),
-    slams: slams, writes: R.servo.writes / dur,
-    panLim: atLim(R.servo.pan, R._M.pmin, R._M.pmax), tiltLim: atLim(R.servo.tilt, R._M.tmin, R._M.tmax)
-  };
-  if (d.pan) { var e = 0; for (i = 0; i < d.pan.length; i++) e += Math.pow(d.pan[i] - R.panAtSample[i], 2); m.rmsePan = Math.sqrt(e / d.pan.length); }
-  if (d.tilt) { e = 0; for (i = 0; i < d.tilt.length; i++) e += Math.pow(d.tilt[i] - R.tiltAtSample[i], 2); m.rmseTilt = Math.sqrt(e / d.tilt.length); }
-  return m;
+// How much smoother (%) and how late (ms) the filtered axis is compared with the raw one
+function score(d, R, ax) {
+  var raw = ax === "yaw" ? unwrap(d.yaw).v : d.pitch, f = ax === "yaw" ? unwrap(R.yaw).v : R.pitch;
+  return { smooth: (1 - rough(f) / rough(raw)) * 100, lag: lagMs(d.t, raw, f, 0.01) };
 }
- 
+
 /* ================= FFT ================= */
 function fft(re, im) {
   var n = re.length;
@@ -962,161 +865,126 @@ Chart.prototype.draw = function () {
   var tw = tip.offsetWidth; tip.style.left = (X + 14 + tw > W ? X - tw - 14 : X + 14) + "px"; tip.style.top = "6px";
 };
  
-/* ================= Wire up charts ================= */
+/* ================= Charts ================= */
 function chart(key, cfg) { return new Chart($('[data-chart="' + key + '"]'), cfg); }
 function lg(key) { return $('[data-lg="' + key + '"]'); }
-var C = {
-  raw: chart("raw", { type: "time", yUnit: "°", xUnit: "s", h: 240, label: "Raw roll, pitch and yaw over time" }),
-  time: chart("time", { type: "time", yUnit: "", xUnit: "s", yFloor: 0, label: "Milliseconds between samples" }),
-  clean: chart("clean", { type: "time", yUnit: "°", xUnit: "s", label: "Raw vs cleaned angle" }),
-  kf: chart("kf", { type: "time", yUnit: "°", xUnit: "s", label: "Cleaned vs Kalman-filtered angle" }),
-  db: chart("db", { type: "time", yUnit: "°", xUnit: "s", label: "Dead-band hold for yaw and pitch" }),
-  pan: chart("pan", { type: "time", yUnit: "°", xUnit: "s", label: "Pan servo target and command" }),
-  tilt: chart("tilt", { type: "time", yUnit: "°", xUnit: "s", label: "Tilt servo target and command" }),
-  ws: chart("ws", { type: "xy", yUnit: "°", xUnit: "°", xdom: [0, 180], ydom: [0, 180], h: 260, label: "Pan vs tilt trajectory" }),
-  fft: chart("fft", { type: "freq", yUnit: " dB", xUnit: " Hz", label: "Frequency spectrum" })
-};
-$$("[data-min]").forEach(function (b) { b.addEventListener("click", function () { var w = b.closest(".win"); w.classList.toggle("min"); b.textContent = w.classList.contains("min") ? "+" : "–"; redraw(); }); });
-$$("[data-max]").forEach(function (b) { b.addEventListener("click", function () { b.closest(".win").classList.toggle("wide"); redraw(); }); });
-$("#btnZoom").addEventListener("click", function () { VIEW = null; redraw(); });
-$("#focus").addEventListener("change", function () { render(); });
- 
-/* ================= Run ================= */
-var LAST = null, runTimer = null;
-function scheduleRun() { clearTimeout(runTimer); runTimer = setTimeout(run, 60); }
 var AX = { roll: { name: "Roll", c: "--s1" }, pitch: { name: "Pitch", c: "--s2" }, yaw: { name: "Yaw", c: "--s3" } };
- 
+var FORMULA = { lpf: "y ← y + α · (x − y)", ma: "y = (x₁ + x₂ + … + x_N) / N", kalman: "predict angle + speed, correct with x" };
+var FILTER_KV = { lpf: [["alpha", ""]], ma: [["MA_N", " readings"]], kalman: [["PAN_KF_Q", ""], ["PAN_KF_R", ""], ["TILT_KF_Q", ""], ["TILT_KF_R", ""], ["KF_MAX_GAP", " s"]] };
+var METHOD = "kalman", AXIS = "yaw";
+try { if (METHODS.indexOf(localStorage.getItem("ptl-method")) >= 0) METHOD = localStorage.getItem("ptl-method"); } catch (e) {}
+
+$("#fcards").innerHTML = METHODS.map(function (m) {
+  return '<div class="card fcard" data-m="' + m + '"><div class="fhead"><b>' + MNAME[m] + '</b><small data-src="' + m + '"></small></div>' +
+    '<div class="formula">' + FORMULA[m] + '</div><div class="lg" data-lg="f-' + m + '"></div><div data-chart="f-' + m + '"></div>' +
+    '<div class="fstats" data-stats="' + m + '"></div><div class="kvs" data-kv="' + m + '"></div>' +
+    '<button class="btn sm use" type="button" data-use="' + m + '"></button></div>';
+}).join("");
+
+var C = {
+  raw: chart("raw", { type: "time", yUnit: "°", xUnit: "s", h: 230, label: "Raw roll, pitch and yaw over time" }),
+  time: chart("time", { type: "time", yUnit: "", xUnit: "s", yFloor: 0, h: 170, label: "Milliseconds between readings" }),
+  db: chart("db", { type: "time", yUnit: "°", xUnit: "s", h: 210, label: "Filtered angle and dead-band hold" }),
+  pan: chart("pan", { type: "time", yUnit: "°", xUnit: "s", h: 200, label: "Pan servo angle" }),
+  tilt: chart("tilt", { type: "time", yUnit: "°", xUnit: "s", h: 200, label: "Tilt servo angle" }),
+  fft: chart("fft", { type: "freq", yUnit: " dB", xUnit: " Hz", h: 200, label: "Frequency spectrum" })
+};
+METHODS.forEach(function (m) { C["f-" + m] = chart("f-" + m, { type: "time", yUnit: "°", xUnit: "s", h: 190, label: MNAME[m] + " filter" }); });
+
+$$("[data-axis]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    AXIS = b.getAttribute("data-axis");
+    $$("[data-axis]").forEach(function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-axis") === AXIS)); });
+    render();
+  });
+});
+function setMethod(m) { METHOD = m; try { localStorage.setItem("ptl-method", m); } catch (e) {} if (LAST) { LAST.R = LAST.all[m]; render(); } ANIM.sig = ""; }
+$("#fcards").addEventListener("click", function (e) { var b = e.target.closest("[data-use]"); if (b) setMethod(b.getAttribute("data-use")); });
+
+/* ================= Run ================= */
+var LAST = null;
+function boardMethod() { return !DATA ? null : DATA.fcode ? MCODE[DATA.fcode] || null : DATA.kfy ? "kalman" : null; }   // older logs came only from the Kalman file
 function run() {
   if (!DATA) return;
-  var M = toModel(readParams());
-  var R = process(DATA, M); R._M = M;
-  var F = process(DATA, toModel(PRESETS.firmware)); F._M = toModel(PRESETS.firmware);
-  LAST = { R: R, F: F, mR: metrics(DATA, R), mF: metrics(DATA, F) };
+  var all = {};
+  METHODS.forEach(function (m) { all[m] = process(DATA, m); });
+  LAST = { all: all, R: all[METHOD] };
   FULL = [DATA.t[0], DATA.t[DATA.t.length - 1]];
   if (VIEW && (VIEW[0] > FULL[1] || VIEW[1] < FULL[0])) VIEW = null;
-  BANDS = R.gaps;
+  BANDS = [];
+  for (var i = 1; i < DATA.t.length; i++) if (DATA.t[i] - DATA.t[i - 1] > 0.5) BANDS.push([DATA.t[i - 1], DATA.t[i]]);
   render();
 }
- 
+function kvs(list, c) { return list.map(function (k) { return '<span class="kv"><i>' + k[0] + '</i>' + c[k[0]] + k[1] + '</span>'; }).join(""); }
+function mapKv(c, inA, inB, outA, outB, name, rate) {
+  return '<span class="kv"><i>' + name + '</i>' + c[inA] + '…' + c[inB] + '° → ' + c[outA] + '…' + c[outB] + '°</span>' + kvs([[rate, " °/s"]], c);
+}
+function srcLabel(m) {
+  if (m === "ma") return "not on the board yet";
+  var f = CODE[m].file;
+  return '<a href="https://github.com/' + REPO + '/blob/main/' + encodeURI(f) + '" target="_blank" rel="noopener">' + esc(f.split("/").pop()) + '</a>' +
+    (CODE[m].from === "code" ? " ✓" : "");
+}
+function servoSeries(tgt, cmd, logged) {
+  var s = [{ name: "Target", x: DATA.t, y: tgt, color: "--raw", w: 1.5, kind: "step" }, { name: "Servo (" + MSHORT[METHOD] + ")", x: LAST.R.servo.t, y: cmd, color: "--s1", dec: 0 }];
+  var bm = boardMethod();
+  if (logged) s.push({ name: "ESP32 board" + (bm ? " (" + MSHORT[bm] + ")" : ""), x: DATA.t, y: logged, color: "--s2", dash: true, dec: 0 });
+  return s;
+}
+
 function render() {
   if (!LAST) return;
-  var d = DATA, R = LAST.R, M = R._M, ax = $("#focus").value, A = AX[ax];
-  $$("[data-axis]").forEach(function (e) { e.textContent = A.name; });
-  var brk = R.seg;
-  // 0 raw
+  var d = DATA, R = LAST.R, c = R.c, ax = AXIS, A = AX[ax], bm = boardMethod();
+  var brk = d.t.map(function (v, i) { return i > 0 && v - d.t[i - 1] > 0.5; });
+  var dtn = median(d.t.slice(1).map(function (v, i) { return v - d.t[i]; }));
+  $$("[data-k]").forEach(function (e) { e.textContent = c[e.getAttribute("data-k")]; });
+  // 2 raw
   C.raw.set(["roll", "pitch", "yaw"].map(function (k) { return { name: AX[k].name, x: d.t, y: d[k], color: AX[k].c, breaks: brk }; }), [], lg("raw"));
-  // 1 timing
-  var nominal = median(R.dt.filter(isFinite));
-  C.time.set([{ name: "Time since previous sample (ms)", x: d.t, y: R.dt, color: "--s1", w: 1.5, dec: 0 }],
-    [{ y: M.gap * 1000, label: "gap threshold " + M.gap * 1000 + " ms" }, { y: nominal, label: "median " + nominal.toFixed(0) + " ms" }], lg("time"));
-  $("#n-time").innerHTML = "Median <b>" + nominal.toFixed(0) + " ms</b> (" + (1000 / nominal).toFixed(1) + " Hz), jitter σ <b>" + fmt(LAST.mR.jitter, 0) + " ms</b>. " +
-    "<b>" + R.gaps.length + "</b> gap(s) longer than " + M.gap + " s reset the Kalman filter, like <code>KF_MAX_GAP</code> in the firmware.";
-  // 2 clean
-  var sp = R.spikes[ax], rawAx = d[ax];
-  C.clean.set([
-    { name: "Raw " + A.name, x: d.t, y: rawAx, color: "--raw", w: 1.25, breaks: brk },
-    { name: "Cleaned", x: d.t, y: R.clean[ax], color: A.c, breaks: brk },
-    { name: "Removed spike", kind: "dots", x: sp.map(function (i) { return d.t[i]; }), y: sp.map(function (i) { return rawAx[i]; }), color: "--s8" }
-  ], [], lg("clean"));
-  $("#n-clean").innerHTML = (ax === "yaw" ? (M.unwrap ? "Unwrap fixed <b>" + R.jumps + "</b> jump(s) across ±180°. " : "<b>Unwrap is off</b> — a turn past ±180° looks like a 360° jump. ") : "") +
-    (M.hampel ? "Hampel filter replaced <b>" + sp.length + "</b> sample(s) that were more than " + M.hn + "σ from the median of the last " + (2 * M.hk + 1) + " samples. The window only looks back, so it can run live on the ESP32." : "<b>Spike removal is off</b>, as in the firmware.");
-  // 3 kalman
-  var k = R.kf[ax];
-  C.kf.set([
-    { name: "Cleaned " + A.name, x: d.t, y: R.clean[ax], color: "--raw", w: 1.25, breaks: brk },
-    { name: "Kalman (browser)", x: d.t, y: k, color: A.c, breaks: brk }
-  ].concat(ax === "yaw" && d.kfy ? [{ name: "Kalman (ESP32 log)", x: d.t, y: d.kfy, color: "--s1", dash: true }] :
-           ax === "pitch" && d.kfp ? [{ name: "Kalman (ESP32 log)", x: d.t, y: d.kfp, color: "--s1", dash: true }] : []), [], lg("kf"));
-  var q = ax === "yaw" ? M.Qp : M.Qt, r = ax === "yaw" ? M.Rp : M.Rt;
-  var red = (1 - rough(k) / rough(R.clean[ax])) * 100, lag = lagMs(d.t, R.clean[ax], k);
-  $("#n-kf").innerHTML = "Constant-velocity model, Q = <b>" + fmtLog(Math.log10(q)) + "</b>, R = <b>" + fmtLog(Math.log10(r)) + "</b>. " +
-    "Roughness down <b>" + fmt(red, 0) + "%</b>, delay about <b>" + fmt(lag, 0) + " ms</b>. Higher Q follows faster; higher R smooths more.";
-  // 4 dead-band
+  // 3 timing
+  var dts = d.t.map(function (v, i) { return i ? Math.round((v - d.t[i - 1]) * 10000) / 10 : NaN; });
+  // Fixed 0-based scale: perfectly even timing must look flat, not zoomed-in rounding noise
+  C.time.cfg.ydom = [0, Math.max(c.readInterval * 2, Math.max.apply(null, dts.filter(isFinite)) * 1.1)];
+  C.time.set([{ name: "ms since the previous reading", x: d.t, y: dts, color: "--s1", w: 1.5, dec: 0 }], [{ y: c.readInterval, label: "board: " + c.readInterval + " ms" }], lg("time"));
+  $("#n-time").innerHTML = "Median <b>" + fmt(dtn * 1000, 0) + " ms</b> (" + fmt(1 / dtn, 1) + " Hz) · <b>" + BANDS.length + "</b> gap(s) over 0.5 s" +
+    (dtn < 0.06 ? " · <b>faster than the board</b> (Python recording?), so filter delays here look shorter than on the ESP32-S3" : "");
+  // 4 filters
+  METHODS.forEach(function (m) {
+    var Rm = LAST.all[m], cm = Rm.c, s = [{ name: "Raw " + A.name, x: d.t, y: d[ax], color: "--raw", w: 1.25, breaks: brk }, { name: MSHORT[m], x: d.t, y: Rm[ax], color: "--s1", breaks: Rm.seg }];
+    var board = bm === m ? (ax === "yaw" ? d.kfy : d.kfp) : null;
+    if (board) s.push({ name: "ESP32 board", x: d.t, y: board, color: "--s2", dash: true });
+    C["f-" + m].set(s, [], lg("f-" + m));
+    var sc = score(d, Rm, ax), extra = m === "ma" ? "<span>Window <b>" + fmt(cm.MA_N * dtn, 1) + " s</b></span>" : m === "lpf" ? "<span>Time constant <b>" + fmt((1 - cm.alpha) / cm.alpha * dtn, 1) + " s</b></span>" : "";
+    $('[data-stats="' + m + '"]').innerHTML = "<span>Smoother <b>" + fmt(sc.smooth, 0) + "%</b></span><span>Delay <b>" + fmt(sc.lag, 0) + " ms</b></span>" + extra;
+    $('[data-kv="' + m + '"]').innerHTML = kvs(FILTER_KV[m], cm);
+    $('[data-src="' + m + '"]').innerHTML = srcLabel(m);
+    $('.fcard[data-m="' + m + '"]').classList.toggle("sel", m === METHOD);
+    $('[data-use="' + m + '"]').textContent = m === METHOD ? "✓ Drives the servos" : "Use for the servos";
+  });
+  // 5 dead-band
   C.db.set([
-    { name: "Yaw (Kalman)", x: d.t, y: R.kf.yaw, color: "--s3", w: 1, alpha: .5, breaks: brk, noTip: false },
-    { name: "Yaw held", x: d.t, y: R.heldYaw, color: "--s3", kind: "step", breaks: brk },
-    { name: "Pitch (Kalman)", x: d.t, y: R.kf.pitch, color: "--s2", w: 1, alpha: .5, breaks: brk },
-    { name: "Pitch held", x: d.t, y: R.heldPitch, color: "--s2", kind: "step", breaks: brk }
+    { name: "Yaw (" + MSHORT[METHOD] + ")", x: d.t, y: R.yaw, color: "--s3", w: 1, alpha: .45, breaks: R.seg },
+    { name: "Yaw held", x: d.t, y: R.heldYaw, color: "--s3", kind: "step", breaks: R.seg },
+    { name: "Pitch (" + MSHORT[METHOD] + ")", x: d.t, y: R.pitch, color: "--s2", w: 1, alpha: .45, breaks: R.seg },
+    { name: "Pitch held", x: d.t, y: R.heldPitch, color: "--s2", kind: "step", breaks: R.seg }
   ], [], lg("db"));
-  var chP = 0, chT = 0; for (var i = 1; i < d.t.length; i++) { if (R.heldYaw[i] !== R.heldYaw[i - 1]) chP++; if (R.heldPitch[i] !== R.heldPitch[i - 1]) chT++; }
-  $("#n-db").innerHTML = "The output only moves when the input changes by at least <b>" + M.dbp + "°</b> (yaw) or <b>" + M.dbt + "°</b> (pitch). " +
-    "Yaw held value changed on <b>" + Math.round(chP / d.t.length * 100) + "%</b> of samples, pitch on <b>" + Math.round(chT / d.t.length * 100) + "%</b>.";
-  // 5 pan / tilt
-  function servoSeries(tgt, cmd, logged, lo, hi) {
-    var s = [{ name: "Target (mapped + clamped)", x: d.t, y: tgt, color: "--raw", w: 1.5, kind: "step", dec: 1 },
-             { name: "Servo command (rate-limited, 20 ms)", x: R.servo.t, y: cmd, color: "--s1", dec: 0 }];
-    if (logged) s.push({ name: "Logged by ESP32", x: d.t, y: logged, color: "--s2", dash: true, dec: 1 });
-    return s;
-  }
-  C.pan.set(servoSeries(R.panTarget, R.servo.pan, d.pan, M.pmin, M.pmax), [{ y: M.pmin, label: "min " + M.pmin + "°", inDomain: true }, { y: M.pmax, label: "max " + M.pmax + "°", inDomain: true }, { y: 90, label: "center" }], lg("pan"));
-  C.tilt.set(servoSeries(R.tiltTarget, R.servo.tilt, d.tilt, M.tmin, M.tmax), [{ y: M.tmin, label: "min " + M.tmin + "°", inDomain: true }, { y: M.tmax, label: "max " + M.tmax + "°", inDomain: true }, { y: 90, label: "center" }], lg("tilt"));
-  var mR = LAST.mR;
-  $("#n-pan").innerHTML = "Yaw ±" + M.yin + "° maps to " + M.pmin + "–" + M.pmax + "°, limited to <b>" + M.rlp + " °/s</b>. At a limit <b>" + fmt(mR.panLim, 0) + "%</b> of the time. " +
-    (mR.slams ? "<b>" + mR.slams + " full-range swing(s)</b> caused by yaw wrap. " : "") + (mR.rmsePan != null ? "Error vs. ESP32 log: <b>" + fmt(mR.rmsePan, 2) + "°</b> RMS." : "");
-  $("#n-tilt").innerHTML = "Pitch ±" + M.pin + "° maps to " + M.tmin + "–" + M.tmax + "°, limited to <b>" + M.rlt + " °/s</b>. At a limit <b>" + fmt(mR.tiltLim, 0) + "%</b> of the time. " +
-    (mR.rmseTilt != null ? "Error vs. ESP32 log: <b>" + fmt(mR.rmseTilt, 2) + "°</b> RMS." : "");
-  // 6 workspace
-  C.ws.cfg.box = [M.pmin, M.pmax, M.tmin, M.tmax];
-  C.ws.set([{ name: "Servo command path", x: R.servo.pan, y: R.servo.tilt, t: R.servo.t, color: "--s1", w: 1.5, alpha: .75 }], [], lg("ws"));
-  // 6b spectrum
-  var sr = spectrum(d.t, d[ax]), sk = spectrum(d.t, R.kf[ax]);
-  C.fft.set([{ name: "Raw " + A.name, x: sr.f, y: sr.db, color: "--raw", w: 1.25 }, { name: "After Kalman", x: sk.f, y: sk.db, color: A.c }], [], lg("fft"));
-  var pk = 0; for (i = 0; i < sr.f.length; i++) if (sr.f[i] > 1 && sr.db[i] > (sr.db[pk] || -1e9)) pk = i;
-  $("#n-fft").innerHTML = "Sample rate ≈ <b>" + sr.fs.toFixed(1) + " Hz</b>, so the highest frequency visible is <b>" + (sr.fs / 2).toFixed(1) + " Hz</b>. " +
-    (sr.f[pk] ? "Strongest content above 1 Hz: <b>" + sr.f[pk].toFixed(2) + " Hz</b>. " : "") + "Hand tremor (≈8 Hz) above the Nyquist limit shows up at a false, lower frequency.";
-  // 7 metrics
-  renderMetrics();
+  $("#kv-db").innerHTML = kvs([["PAN_DEADBAND_DEG", "°"], ["TILT_DEADBAND_DEG", "°"]], c);
+  // 6 map
+  C.pan.set(servoSeries(R.panTarget, R.servo.pan, d.pan), [{ y: c.PAN_MIN, label: "min " + c.PAN_MIN + "°", inDomain: true }, { y: c.PAN_MAX, label: "max " + c.PAN_MAX + "°", inDomain: true }], lg("pan"));
+  C.tilt.set(servoSeries(R.tiltTarget, R.servo.tilt, d.tilt), [{ y: c.TILT_MIN, label: "min " + c.TILT_MIN + "°", inDomain: true }, { y: c.TILT_MAX, label: "max " + c.TILT_MAX + "°", inDomain: true }], lg("tilt"));
+  $("#kv-pan").innerHTML = mapKv(c, "YAW_MIN_INPUT", "YAW_MAX_INPUT", "PAN_MIN", "PAN_MAX", "Yaw", "PAN_MAX_RATE_DPS");
+  $("#kv-tilt").innerHTML = mapKv(c, "PITCH_MIN_INPUT", "PITCH_MAX_INPUT", "TILT_MIN", "TILT_MAX", "Pitch", "TILT_MAX_RATE_DPS");
+  // 7 FFT
+  var sr = spectrum(d.t, d[ax]), sk = spectrum(d.t, R[ax]), pk = -1;
+  C.fft.set([{ name: "Raw " + A.name, x: sr.f, y: sr.db, color: "--raw", w: 1.25 }, { name: "After " + MSHORT[METHOD].toLowerCase(), x: sk.f, y: sk.db, color: "--s1" }], [], lg("fft"));
+  for (var i = 0; i < sr.f.length; i++) if (sr.f[i] > 0.5 && (pk < 0 || sr.db[i] > sr.db[pk])) pk = i;
+  $("#n-fft").innerHTML = "One reading every " + fmt(dtn * 1000, 0) + " ms, so the fastest shake it can see is <b>" + fmt(sr.fs / 2, 1) + " Hz</b>" +
+    (pk >= 0 ? " · strongest shake above 0.5 Hz: <b>" + fmt(sr.f[pk], 2) + " Hz</b>" : "") + ".";
   // status
-  $("#status").innerHTML = "<b>Source:</b> " + esc(SOURCE) + " · <b>" + d.t.length + "</b> samples · <b>" + fmt(mR.dur, 1) + " s</b> · ≈" + fmt(mR.rate, 1) + " Hz" +
-    (d.dropped ? " · " + d.dropped + " unreadable row(s) skipped" : "") + (d.dup ? " · " + d.dup + " duplicate timestamp(s) removed" : "") +
-    (d.noTime ? " · <b>no time column</b>, assumed 10 Hz" : "") + (d.cols ? " · columns: " + esc(d.cols.join(", ")) : "") +
-    (d.pan ? " · ESP32 pan/tilt log found" : "");
+  $("#status").innerHTML = "<b>" + esc(SOURCE) + "</b> · " + d.t.length + " readings · " + fmt(d.t[d.t.length - 1] - d.t[0], 1) + " s" +
+    (d.dropped ? " · " + d.dropped + " unreadable row(s) skipped" : "") + (d.noTime ? " · no time column, assumed 10 Hz" : "") +
+    (bm ? " · recorded with the " + MSHORT[bm] + " firmware" : "");
 }
- 
-function renderMetrics() {
-  var a = LAST.mF, b = LAST.mR;
-  var rows = [
-    ["Samples", "samples", 0, "", "Rows used after sorting and removing duplicates."],
-    ["Mean sample rate", "rate", 1, " Hz", "ESP32 polls phyphox every 100 ms (10 Hz)."],
-    ["Timing jitter (σ)", "jitter", 0, " ms", "Spread of time between samples."],
-    ["Gaps → filter reset", "gaps", 0, "", "Missing data longer than the gap threshold."],
-    ["Yaw wrap jumps fixed", "jumps", 0, "", "Firmware does not unwrap."],
-    ["Spikes removed", "spikes", 0, "", "All three axes. The look-back window also flags the first samples of a very fast move."],
-    ["Yaw roughness reduction", "yawRough", 0, " %", "Median |2nd difference|, raw vs. Kalman. Higher = smoother."],
-    ["Pitch roughness reduction", "pitchRough", 0, " %", ""],
-    ["Kalman delay (yaw)", "lagYaw", 0, " ms", "Time shift that best lines up filtered with cleaned yaw."],
-    ["End-to-end delay (pan)", "lagPan", 0, " ms", "Phone yaw → servo command, incl. dead-band and rate limiter."],
-    ["Full-range pan swings", "slams", 0, "", "Target jumps > 90° between two samples. Should be 0."],
-    ["Pan at a limit", "panLim", 0, " %", ""],
-    ["Tilt at a limit", "tiltLim", 0, " %", ""],
-    ["Servo writes per second", "writes", 1, "", "Fewer writes = less servo buzz."]
-  ];
-  if (b.rmsePan != null) rows.push(["Pan error vs. ESP32 log", "rmsePan", 2, "°", "RMS. Near 0 means the browser matches the board."]);
-  if (b.rmseTilt != null) rows.push(["Tilt error vs. ESP32 log", "rmseTilt", 2, "°", ""]);
-  $("#metrics").innerHTML = '<thead><tr><th>Metric</th><th style="text-align:right">Firmware as-is</th><th style="text-align:right">Current settings</th><th>What it means</th></tr></thead><tbody>' +
-    rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td class="n">' + fmt(a[r[1]], r[2]) + r[3] + '</td><td class="n">' + fmt(b[r[1]], r[2]) + r[3] + '</td><td class="note">' + r[4] + '</td></tr>'; }).join("") + '</tbody>';
-}
- 
-/* ================= Export ================= */
-$("#btnExport").addEventListener("click", function () {
-  if (!LAST) return;
-  var d = DATA, R = LAST.R, sp = {};
-  ["roll", "pitch", "yaw"].forEach(function (k) { sp[k] = {}; R.spikes[k].forEach(function (i) { sp[k][i] = 1; }); });
-  var head = "t_s,roll_raw,pitch_raw,yaw_raw,roll_clean,pitch_clean,yaw_clean,roll_kf,pitch_kf,yaw_kf,yaw_held,pitch_held,pan_target,tilt_target,pan_cmd,tilt_cmd,spike_roll,spike_pitch,spike_yaw,filter_reset";
-  var lines = [head];
-  for (var i = 0; i < d.t.length; i++) {
-    lines.push([d.t[i].toFixed(3), d.roll[i], d.pitch[i], d.yaw[i],
-      R.clean.roll[i].toFixed(3), R.clean.pitch[i].toFixed(3), R.clean.yaw[i].toFixed(3),
-      R.kf.roll[i].toFixed(3), R.kf.pitch[i].toFixed(3), R.kf.yaw[i].toFixed(3),
-      R.heldYaw[i].toFixed(3), R.heldPitch[i].toFixed(3), R.panTarget[i].toFixed(2), R.tiltTarget[i].toFixed(2),
-      R.panAtSample[i], R.tiltAtSample[i], sp.roll[i] ? 1 : 0, sp.pitch[i] ? 1 : 0, sp.yaw[i] ? 1 : 0, R.seg[i] ? 1 : 0].join(","));
-  }
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
-  a.download = "processed_" + SOURCE.replace(/[^\w.-]+/g, "_").replace(/\.csv$/i, "") + ".csv";
-  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-});
- 
+
 /* ================= Motion view: animated phone + pan-tilt =================
    Tiny canvas 3D: boxes are projected with perspective, back faces culled, the rest painted far-to-near.
    World frame: z up, +y = "front". Phone at rest lies flat, screen up, top edge pointing front.
@@ -1290,10 +1158,11 @@ function animFrame(now) {
   var dt = Math.min(0.1, (now - (ANIM.last || now)) / 1000); ANIM.last = now;
   var live = LIVE.on && LIVE.rows.length > 0, P, t = null, rg = VIEW || FULL;
   if (live) {
+    // Live: phone = newest raw reading, mount = the servo angle the board reports
     var r = LIVE.rows[LIVE.rows.length - 1], a = 1 - Math.exp(-dt * 12);
     P = { roll: r[1], pitch: r[2], yaw: r[3], pan: r[8], tilt: r[9], tPan: r[6], tTilt: r[7] };
     if (!ANIM.disp) ANIM.disp = P;
-    else {                                                   // ease between 10 Hz samples so the models do not jump
+    else {                                                   // ease between 10 Hz readings so the models do not jump
       var D = ANIM.disp;
       ["pitch", "pan", "tilt", "tPan", "tTilt"].forEach(function (k) { D[k] += (P[k] - D[k]) * a; });
       ["roll", "yaw"].forEach(function (k) { D[k] = wrap180(D[k] + wrap180(P[k] - D[k]) * a); });
@@ -1309,16 +1178,17 @@ function animFrame(now) {
     P = poseAt(t);
     if (ANIM.touched && PLAYHEAD !== ANIM.t && now - ANIM.chartAt > 100) { PLAYHEAD = ANIM.t; ANIM.chartAt = now; redraw(); }
   }
-  if (!ANIM.visible || document.hidden || $("#w-anim").classList.contains("min")) return;
+  if (!ANIM.visible || document.hidden) return;
   var K = { body: rgbOf("--m-body"), screen: rgbOf("--m-screen"), cam: rgbOf("--m-cam"), base: rgbOf("--m-base"), metal: rgbOf("--m-metal"), bracket: rgbOf("--m-bracket"), head: rgbOf("--m-head") };
-  var M = LAST ? LAST.R._M : toModel(readParams());
+  var rigM = live ? (boardMethod() || METHOD) : METHOD, c = cfg(rigM), M = { pmin: c.PAN_MIN, pmax: c.PAN_MAX };
   var sig = [P.roll, P.pitch, P.yaw, P.pan, P.tilt, P.tPan, P.tTilt].map(function (v) { return fmt(v, 2); }).join() + "|" +
-    [HOLD, ST.phone.v.az, ST.phone.v.el, ST.rig.v.az, ST.rig.v.el, ST.phone.cv.clientWidth, ST.rig.cv.clientWidth, K.body, K.base, M.pmin, M.pmax, t, live].join();
+    [HOLD, ST.phone.v.az, ST.phone.v.el, ST.rig.v.az, ST.rig.v.el, ST.phone.cv.clientWidth, ST.rig.cv.clientWidth, K.body, K.base, M.pmin, M.pmax, t, live, rigM].join();
   if (sig === ANIM.sig) return;                             // nothing moved: skip the redraw
   ANIM.sig = sig;
   drawPhone(ST.phone, P, K); drawRig(ST.rig, P, K, M);
   $("#roPhone").innerHTML = ["roll", "pitch", "yaw"].map(function (k) { return '<span><i class="sw" style="border-top-color:' + css(AX[k].c) + '"></i>' + AX[k].name + ' <b>' + fmt(P[k], 1) + '°</b></span>'; }).join("");
   $("#roRig").innerHTML = '<span>Pan <b>' + fmt(P.pan, 0) + '°</b><small>target ' + fmt(P.tPan, 0) + '°</small></span><span>Tilt <b>' + fmt(P.tilt, 0) + '°</b><small>target ' + fmt(P.tTilt, 0) + '°</small></span>';
+  $("#rigSrc").textContent = live ? "servo angles from the ESP32-S3" : "servo angles · " + MSHORT[rigM];
   $("#aMode").textContent = live ? "● LIVE" : HOVER != null ? "Hover" : "Replay"; $("#aMode").classList.toggle("live", live);
   $("#aPlay").disabled = $("#aSeek").disabled = live;
   if (!live) {
@@ -1331,12 +1201,15 @@ requestAnimationFrame(animFrame);
 /* ================= Loading ================= */
 function useData(raw, source) {
   if (LIVE.on) liveStop();
-  try { var d = prep(raw); if (d.t.length < 10) throw new Error("Need at least 10 valid rows."); d.cols = raw.cols; d.noTime = raw.noTime; DATA = d; SOURCE = source; VIEW = null; run(); }
-  catch (e) { $("#status").innerHTML = "<b>Could not use " + esc(source) + ":</b> " + esc(e.message); }
+  try {
+    var d = prep(raw); if (d.t.length < 10) throw new Error("Need at least 10 valid rows.");
+    d.noTime = raw.noTime; DATA = d; SOURCE = source; VIEW = null; ANIM.t = null;
+    if (boardMethod()) setMethod(boardMethod());                // show the filter the board was running
+    run();
+  } catch (e) { $("#status").innerHTML = "<b>Could not use " + esc(source) + ":</b> " + esc(e.message); }
 }
-function loadDemo() { var fs = +$("#demoRate").value; useData(makeDemo(fs), "Demo recording (synthetic, " + fs + " Hz)"); }
+function loadDemo() { useData(makeDemo(10), "Demo (made-up motion, 10 Hz)"); }
 $("#btnDemo").addEventListener("click", loadDemo);
-$("#demoRate").addEventListener("change", loadDemo);
 function readFile(f) {
   if (!f) return; var rd = new FileReader();
   rd.onload = function () { try { useData(parseCSV(rd.result), f.name); } catch (e) { $("#status").innerHTML = "<b>Could not read " + esc(f.name) + ":</b> " + esc(e.message); } };
@@ -1348,65 +1221,54 @@ drop.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key =
 ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
 ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
 drop.addEventListener("drop", function (e) { readFile(e.dataTransfer.files[0]); });
-function loadRepo(path, quiet) {
-  // Only same-site relative paths, so the page never pulls data from an unknown host.
-  if (!/^[\w\-./ ]+\.(csv|txt)$/i.test(path) || /\.\./.test(path)) { $("#status").innerHTML = "<b>Path must be a .csv file inside this repo</b>, e.g. data/latest.csv"; return Promise.reject(); }
-  return fetch(encodeURI(path), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-    .then(function (txt) { useData(parseCSV(txt), path); })
-    .catch(function (e) { if (!quiet) $("#status").innerHTML = "<b>Could not load " + esc(path) + ":</b> " + esc(e.message || "not found"); throw e; });
-}
-$("#btnRepo").addEventListener("click", function () { loadRepo($("#repoPath").value.trim()).catch(function () {}); });
- 
- 
-/* ================= Live mode: Web Serial (USB) =================
-   Reads lines printed by the ESP32-S3 firmware:  D,t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt
-   Other Serial output (boot messages etc.) is ignored. Needs Chrome or Edge on a computer, over HTTPS or localhost. */
+
+/* ================= Live: Web Serial (USB) =================
+   Reads the lines both AP firmware files print:  D,t_ms,roll,pitch,yaw,filt_yaw,filt_pitch,pan_target,tilt_target,pan,tilt,filter
+   (filter: 1 = low-pass, 3 = Kalman; older Kalman builds leave it out). Other Serial output is ignored. */
 var LIVE = { port: null, reader: null, closed: null, on: false, rows: [], dirty: false, bad: 0, timer: null, lastRx: 0, lastAny: 0, other: 0, lastOther: "" };
-var LIVE_HEAD = "t_ms,roll,pitch,yaw,kf_yaw,kf_pitch,pan_target,tilt_target,pan,tilt";
-if (!("serial" in navigator)) {
-  $("#btnLive").disabled = true;
-  $("#liveInfo").textContent = "This browser has no Web Serial. Use Chrome or Edge on a computer.";
-}
+var LIVE_HEAD = "t_ms,roll,pitch,yaw,filt_yaw,filt_pitch,pan_target,tilt_target,pan,tilt,filter";
+var LIVE_WIN = 60;                                               // seconds shown in the charts
+if (!("serial" in navigator)) { $("#btnLive").disabled = true; $("#liveInfo").textContent = "This browser has no Web Serial. Use Chrome or Edge on a computer."; }
 function liveLine(line) {
   line = line.trim();
   if (!line) return;
   LIVE.lastAny = Date.now();
   if (line.indexOf("D,") !== 0) { LIVE.other++; LIVE.lastOther = line.slice(0, 70); return; }
   var v = line.slice(2).split(",").map(Number);
-  if (v.length !== 10 || v.some(function (x) { return !isFinite(x); })) { LIVE.bad++; return; }
+  if (v.length === 10) v.push(3);                                // older build of the Kalman firmware
+  if (v.length !== 11 || v.some(function (x) { return !isFinite(x); })) { LIVE.bad++; return; }
   var prev = LIVE.rows[LIVE.rows.length - 1];
-  if (prev && v[0] < prev[0]) LIVE.rows = [];            // board rebooted (millis restarted) → new session
+  if (prev && v[0] < prev[0]) LIVE.rows = [];                    // board rebooted (millis restarted) → new session
   LIVE.rows.push(v); LIVE.dirty = true; LIVE.lastRx = Date.now();
-  if (LIVE.rows.length > 36000) LIVE.rows.shift();       // keep at most ~1 hour at 10 Hz
+  if (LIVE.rows.length > 36000) LIVE.rows.shift();               // keep at most ~1 hour at 10 Hz
 }
 function liveRender() {
-  var info = LIVE.rows.length + " rows" + (LIVE.bad ? " · " + LIVE.bad + " bad line(s)" : "");
-  var now = Date.now(), quiet = Math.round((now - LIVE.lastRx) / 1000);
-  if (LIVE.on && now - LIVE.lastAny > 3000)
-    info += " · no Serial text at all for " + Math.round((now - LIVE.lastAny) / 1000) + " s. Check the USB cable and port (on the ESP32-S3-DevKitM-1 use the port marked UART), then press RESET on the board.";
-  else if (LIVE.on && !LIVE.rows.length && LIVE.other)
-    info += ' · Serial text arrives but no "D," data lines yet (last line: "' + LIVE.lastOther + '"). Either the phone is not sending (phyphox running with Remote access on, phone joined to the ESP32-S3 Wi-Fi, board in AUTO mode) or the board runs firmware without the data log: only esp32-smartphone-control-APkm.cpp (pio env ap-dashboard-kalman) prints it.';
-  else if (LIVE.on && now - LIVE.lastRx > 2000) info += " · no data for " + quiet + " s (is the phone connected and the board in AUTO mode?)";
+  var now = Date.now(), n = LIVE.rows.length, fw = n ? MCODE[LIVE.rows[n - 1][10]] : null;
+  var info = n ? n + " readings · firmware: " + (fw ? MSHORT[fw] : "unknown") : "";
+  if (LIVE.on && now - LIVE.lastAny > 3000) info = "No Serial text for " + Math.round((now - LIVE.lastAny) / 1000) + " s. Check the USB cable/port, then press RESET on the board.";
+  else if (LIVE.on && !n && LIVE.other) info = 'Board is talking but sends no data yet (last: "' + LIVE.lastOther + '"). Phone on the ESP32-S3 Wi-Fi, phyphox running with Remote access, board in AUTO mode?';
+  else if (LIVE.on && now - LIVE.lastRx > 2000) info += " · no data for " + Math.round((now - LIVE.lastRx) / 1000) + " s";
+  else if (LIVE.on && !n) info = "Connected, waiting for data…";
   $("#liveInfo").textContent = info;
-  if (!LIVE.dirty || LIVE.rows.length < 10) return;
+  if (!LIVE.dirty || n < 10) return;
   LIVE.dirty = false;
-  var win = +$("#liveWin").value, rows = LIVE.rows, tEnd = rows[rows.length - 1][0], t0 = rows[0][0];
-  var sel = rows.filter(function (r) { return r[0] >= tEnd - win * 1000; });
+  var rows = LIVE.rows, tEnd = rows[n - 1][0], t0 = rows[0][0];
+  var sel = rows.filter(function (r) { return r[0] >= tEnd - LIVE_WIN * 1000; });
   if (sel.length < 10) return;
   var col = function (j) { return sel.map(function (r) { return r[j]; }); };
-  var raw = { keepTime: true, t: sel.map(function (r) { return (r[0] - t0) / 1000; }),
-    roll: col(1), pitch: col(2), yaw: col(3), kfy: col(4), kfp: col(5), pan: col(8), tilt: col(9),
-    cols: ["live USB: " + LIVE_HEAD] };
-  var d = prep(raw); d.cols = raw.cols;
-  DATA = d; SOURCE = "Live USB — last " + win + " s";
+  var raw = { keepTime: true, t: sel.map(function (r) { return (r[0] - t0) / 1000; }), roll: col(1), pitch: col(2), yaw: col(3),
+    kfy: col(4), kfp: col(5), pan: col(8), tilt: col(9), fcode: sel[sel.length - 1][10] };
+  var first = !DATA || DATA.fcode !== raw.fcode;
+  DATA = prep(raw); SOURCE = "Live from the ESP32-S3 · last " + LIVE_WIN + " s";
+  if (first && boardMethod()) setMethod(boardMethod());
   run();
 }
 async function liveStart() {
   try {
-    var port = await navigator.serial.requestPort();      // user picks the port; nothing is opened without that
+    var port = await navigator.serial.requestPort();           // the user picks the port; nothing opens without that
     await port.open({ baudRate: 115200 });
-    LIVE.port = port; LIVE.on = true; LIVE.rows = []; LIVE.bad = 0; LIVE.other = 0; LIVE.lastOther = ""; LIVE.lastRx = LIVE.lastAny = Date.now(); VIEW = null;
-    $("#btnLive").disabled = true; $("#btnStop").disabled = false; $("#btnSaveLive").disabled = false;
+    LIVE.port = port; LIVE.on = true; LIVE.rows = []; LIVE.bad = 0; LIVE.other = 0; LIVE.lastOther = ""; LIVE.lastRx = LIVE.lastAny = Date.now(); VIEW = null; DATA = null; LAST = null;
+    $("#btnLive").disabled = true; $("#btnStop").disabled = false; $("#btnSaveLive").disabled = false; $("#liveDot").classList.add("on");
     LIVE.timer = setInterval(liveRender, 250);
     var dec = new TextDecoderStream();
     LIVE.closed = port.readable.pipeTo(dec.writable).catch(function () {});
@@ -1420,7 +1282,7 @@ async function liveStart() {
       lines.forEach(liveLine);
     }
   } catch (e) {
-    if (e && e.name !== "NotFoundError") $("#liveInfo").textContent = "Serial error: " + (e.message || e) + " — close Arduino Serial Monitor and try again.";
+    if (e && e.name !== "NotFoundError") $("#liveInfo").textContent = "Serial error: " + (e.message || e) + " (close Serial Monitor and try again)";
   }
   liveCleanup();
 }
@@ -1434,13 +1296,12 @@ async function liveCleanup() {
   try { if (LIVE.closed) await LIVE.closed; } catch (e) {}
   try { if (LIVE.port) await LIVE.port.close(); } catch (e) {}
   LIVE.port = LIVE.reader = LIVE.closed = null; LIVE.on = false;
-  $("#btnLive").disabled = !("serial" in navigator); $("#btnStop").disabled = true;
+  $("#btnLive").disabled = !("serial" in navigator); $("#btnStop").disabled = true; $("#liveDot").classList.remove("on");
   liveRender();
-  if (LIVE.rows.length) $("#liveInfo").textContent = "Stopped · " + LIVE.rows.length + " rows kept. Save the session CSV to analyse it later.";
+  if (LIVE.rows.length) $("#liveInfo").textContent = "Stopped · " + LIVE.rows.length + " readings kept. Save the CSV to look at them again later.";
 }
 $("#btnLive").addEventListener("click", liveStart);
 $("#btnStop").addEventListener("click", liveStop);
-$("#liveWin").addEventListener("change", function () { LIVE.dirty = true; VIEW = null; liveRender(); });
 $("#btnSaveLive").addEventListener("click", function () {
   if (!LIVE.rows.length) return;
   var txt = LIVE_HEAD + "\n" + LIVE.rows.map(function (r) { return r.join(","); }).join("\n");
@@ -1448,10 +1309,12 @@ $("#btnSaveLive").addEventListener("click", function () {
   a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv" })); a.download = "live_" + ts + ".csv";
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 });
- 
-applyPresetSilently(PRESETS.recommended);
-function applyPresetSilently(p) { KEYS.forEach(function (k) { var el = $("#" + k); if (el.type === "checkbox") el.checked = p[k]; else el.value = p[k]; }); showOutputs(); }
-loadRepo("data/latest.csv", true).catch(loadDemo);
+
+// Start: read the settings from the firmware files, then show data/latest.csv if the repo has one, otherwise the demo
+Promise.all([readCode("lpf"), readCode("kalman")]).then(function () {
+  return fetch("data/latest.csv", { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.text(); })
+    .then(function (txt) { useData(parseCSV(txt), "data/latest.csv"); });
+}).catch(loadDemo);
 })();
 </script>
 </body>
