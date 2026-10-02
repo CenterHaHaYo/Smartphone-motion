@@ -1091,12 +1091,14 @@ Stage.prototype.faces = function (list) {
 // "camera": held sideways like a camera — long side left-right, screen facing you, back camera facing front.
 //           CAM_BASE turns the flat model into that pose (x → up, y → left, z → toward you).
 // Then the angles act like on a camera: Yaw turns about the vertical, Pitch nods about the left-right axis
-// (positive = looks up, like Tilt above 90°), Roll tips about the front axis. "flat" skips CAM_BASE.
+// Roll tips about the front axis. "flat" skips CAM_BASE.
+// Held like a camera, phyphox's Pitch goes negative when the phone looks up and positive when it looks down,
+// so the camera pose nods by -Pitch to move the same way as the real phone.
 var CAM_BASE = [[0, -1, 0], [0, 0, -1], [1, 0, 0]];
 function drawPhone(st, P, K) {
   if (!st.begin()) return;
   var cam = HOLD === "camera", gz = -1.15;
-  var M = mmul(rotZ(P.yaw * D2R), mmul(rotX(P.pitch * D2R), rotY(P.roll * D2R)));
+  var M = mmul(rotZ(P.yaw * D2R), mmul(rotX((cam ? -P.pitch : P.pitch) * D2R), rotY(P.roll * D2R)));
   if (cam) M = mmul(M, CAM_BASE);
   var part = function (a, b, col) { return box(a, b, col, M); };
   st.grid(gz, 1.5);
