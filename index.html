@@ -988,7 +988,8 @@ function render() {
 /* ================= Motion view: animated phone + pan-tilt =================
    Tiny canvas 3D: boxes are projected with perspective, back faces culled, the rest painted far-to-near.
    World frame: z up, +y = "front". Phone at rest lies flat, screen up, top edge pointing front.
-   Phone rotation = Rz(yaw)·Rx(pitch)·Ry(roll). Rig: pan turns about z, tilt about the head's x axis (90° = level, facing front). */
+   Phone rotation = Rz(yaw)·Rx(pitch)·Ry(roll). Rig: pan turns about z, tilt about the head's x axis (90° = level, facing front;
+   below 90° looks up, above 90° looks down, same as the real servo follows the phone's Pitch). */
 var D2R = Math.PI / 180;
 function rotX(a) { var c = Math.cos(a), s = Math.sin(a); return [[1, 0, 0], [0, c, -s], [0, s, c]]; }
 function rotY(a) { var c = Math.cos(a), s = Math.sin(a); return [[c, 0, s], [0, 1, 0], [-s, 0, c]]; }
@@ -1115,7 +1116,7 @@ function drawPhone(st, P, K) {
 }
 function drawRig(st, P, K, M) {
   if (!st.begin()) return;
-  var Pz = rotZ((P.pan - 90) * D2R), Tm = mmul(Pz, rotX((P.tilt - 90) * D2R)), piv = [0, 0, 1.25];
+  var Pz = rotZ((P.pan - 90) * D2R), Tm = mmul(Pz, rotX((90 - P.tilt) * D2R)), piv = [0, 0, 1.25];
   st.grid(0, 1.5);
   // The camera is always above the parts, so stacked layers are painted bottom-up; the top layer is sorted far-to-near per part
   st.faces(box([-.8, -.8, 0], [.8, .8, .18], K.base));
@@ -1131,7 +1132,7 @@ function drawRig(st, P, K, M) {
    box([-.15, .38, -.15], [.15, .58, .15], K.screen, Tm, piv)]   // lens
     .map(function (b) { return { b: b, z: st.depth(b) }; }).sort(function (x, y) { return y.z - x.z; })
     .forEach(function (o) { st.faces(o.b); });
-  var dir = function (pan, tilt) { return mvec(mmul(rotZ((pan - 90) * D2R), rotX((tilt - 90) * D2R)), [0, 1, 0]); };
+  var dir = function (pan, tilt) { return mvec(mmul(rotZ((pan - 90) * D2R), rotX((90 - tilt) * D2R)), [0, 1, 0]); };
   var at = function (d, k) { return [piv[0] + d[0] * k, piv[1] + d[1] * k, piv[2] + d[2] * k]; };
   if (isFinite(P.tPan) && isFinite(P.tTilt)) { var dt = dir(P.tPan, P.tTilt); st.line([at(dt, .6), at(dt, 2.6)], css("--raw"), 1.5, [5, 4]); }
   var dc = dir(P.pan, P.tilt); st.line([at(dc, .6), at(dc, 2.8)], css("--s1"), 2.5);
