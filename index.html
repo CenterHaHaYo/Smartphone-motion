@@ -250,7 +250,7 @@
   <ol class="flow" aria-label="Steps">
     <li><a href="#s1"><i class="num">1</i>Data</a></li>
     <li><a href="#motion"><i class="num">▶</i>Motion</a></li>
-    <li><a href="#s2"><i class="num">2</i>Raw RPY</a></li>
+    <li><a href="#s2"><i class="num">2</i>Camera angles</a></li>
     <li><a href="#s3"><i class="num">3</i>Timing</a></li>
     <li><a href="#s4"><i class="num">4</i>Filter</a></li>
     <li><a href="#s5"><i class="num">5</i>Dead-band</a></li>
@@ -292,10 +292,10 @@
 
   <!-- Motion -->
   <div class="step" id="motion">
-    <div class="sh"><span class="num">▶</span><h3>Motion</h3><p>The phone turns with the raw angles; the mount turns with the servo angles from steps 4–6.</p></div>
+    <div class="sh"><span class="num">▶</span><h3>Motion</h3><p>The phone is held sideways like a camera: <b>Yaw</b> turns it left/right → Pan, <b>Pitch</b> nods it up/down → Tilt, <b>Roll</b> tips it sideways (not used).</p></div>
     <div class="card" id="w-anim">
       <div class="anim">
-        <figure class="stage"><figcaption><b>Smartphone</b><label>held <select id="aHold" aria-label="How the phone is held"><option value="portrait">portrait</option><option value="landscape">landscape</option></select></label></figcaption>
+        <figure class="stage"><figcaption><b>Smartphone</b><span>held like a camera</span></figcaption>
           <canvas id="cvPhone" role="img" aria-label="3D smartphone turned by roll, pitch and yaw"></canvas>
           <div class="readout" id="roPhone"></div></figure>
         <figure class="stage"><figcaption><b>Pan-tilt FPV mount</b><span id="rigSrc">servo angles</span></figcaption>
@@ -309,13 +309,13 @@
         <select id="aSpeed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
         <span class="amode" id="aMode">Replay</span>
       </div>
-      <p class="hint">Blue ray = where the camera points. Dashed ray = target before the speed limit. Drag a view to turn it, double-click to reset.</p>
+      <p class="hint">Blue rays = where each camera points. Dashed ray = target before the speed limit. Drag a view to turn it, double-click to reset.</p>
     </div>
   </div>
 
   <!-- 2 Raw -->
   <div class="step" id="s2">
-    <div class="sh"><span class="num">2</span><h3>Raw Roll, Pitch, Yaw from phyphox</h3><p>Degrees, exactly as the phone sends them. Yaw drives Pan, Pitch drives Tilt, Roll is not used.</p></div>
+    <div class="sh"><span class="num">2</span><h3>Where the phone's camera points</h3><p>Yaw, Pitch, Roll worked out from phyphox's quaternion (w, x, y, z), the same way the ESP32-S3 does it. Yaw = turn left/right (0 = start direction) → Pan, Pitch = look up/down → Tilt, Roll = tip sideways (not used).</p></div>
     <div class="card"><div class="lg" data-lg="raw"></div><div data-chart="raw"></div>
       <p class="hint">Drag across any chart to zoom · double-click to reset · hover to see the same moment in every chart.</p></div>
   </div>
@@ -544,6 +544,25 @@ function makeDemo(fs) {
   return out;
 }
  
+// Same as quatToCameraAim() in the AP firmware: turns phyphox's quaternion (phone axes -> world, Z up) into
+// where the phone's back camera points. yaw = heading (left +, 0 = first reading), pitch = up/down, roll = sideways tip.
+function makeAim() {
+  var zero = null, last = { yaw: 0, roll: 0 };
+  return function (w, x, y, z) {
+    var n = Math.sqrt(w * w + x * x + y * y + z * z); if (!(n > 0.5)) return null;
+    w /= n; x /= n; y /= n; z /= n;
+    var fx = -2 * (x * z + w * y), fy = -2 * (y * z - w * x), fz = -(1 - 2 * (x * x + y * y));
+    var ux = 1 - 2 * (y * y + z * z), uy = 2 * (x * y + w * z), uz = 2 * (x * z - w * y);
+    var h = Math.hypot(fx, fy), pitch = Math.atan2(fz, h) / D2R;
+    if (h < 0.5) return { yaw: last.yaw, pitch: pitch, roll: last.roll };      // more than 60° up/down: keep heading and roll
+    var head = Math.atan2(-fx, fy) / D2R; if (zero == null) zero = head;
+    var rx = fy / h, ry = -fx / h, vx = ry * fz, vy = -rx * fz, vz = rx * fy - ry * fx;
+    var roll = Math.atan2(ux * rx + uy * ry, ux * vx + uy * vy + uz * vz) / D2R;
+    if (roll > 90) roll -= 180; if (roll < -90) roll += 180;
+    last = { yaw: wrap180(head - zero), roll: roll };
+    return { yaw: last.yaw, pitch: pitch, roll: roll };
+  };
+}
 function parseCSV(text) {
   var lines = text.replace(/\r/g, "").split("\n").filter(function (l) { return l.trim().length; });
   if (lines.length < 3) throw new Error("File has fewer than 3 lines.");
@@ -554,9 +573,11 @@ function parseCSV(text) {
     t: find([/^t_ms$/, /^time_s$/, /^time \(s\)$/, /^(t|time|timestamp|millis|ms)$/, /time/]),
     roll: find([/raw_?roll/, /^roll/, /roll/]), pitch: find([/raw_?pitch/, /^pitch/, /^(?!kf|filt).*pitch/]), yaw: find([/raw_?yaw/, /^yaw/, /^(?!kf|filt).*yaw/]),
     pan: find([/^pan$/, /^pan_?(deg|cmd|angle|servo)$/, /^(?!.*target).*pan/]), tilt: find([/^tilt$/, /^tilt_?(deg|cmd|angle|servo)$/, /^(?!.*target).*tilt/]),
-    kfy: find([/^kf_?yaw/, /^filt_?yaw/]), kfp: find([/^kf_?pitch/, /^filt_?pitch/]), fc: find([/^filter$/])
+    kfy: find([/^kf_?yaw/, /^filt_?yaw/]), kfp: find([/^kf_?pitch/, /^filt_?pitch/]), fc: find([/^filter$/]),
+    qw: find([/^w$/]), qx: find([/^x$/]), qy: find([/^y$/]), qz: find([/^z$/])
   };
-  if (ci.roll < 0 && ci.pitch < 0 && ci.yaw < 0) throw new Error("No roll, pitch or yaw column found. Header: " + first);
+  var aim = ci.qw >= 0 && ci.qx >= 0 && ci.qy >= 0 && ci.qz >= 0 ? makeAim() : null;   // phyphox export with w, x, y, z
+  if (!aim && ci.roll < 0 && ci.pitch < 0 && ci.yaw < 0) throw new Error("No roll, pitch or yaw column found. Header: " + first);
   var d = { t: [], roll: [], pitch: [], yaw: [], pan: ci.pan >= 0 ? [] : null, tilt: ci.tilt >= 0 ? [] : null,
             kfy: ci.kfy >= 0 ? [] : null, kfp: ci.kfp >= 0 ? [] : null, dropped: 0 };
   for (var i = 1; i < lines.length; i++) {
@@ -564,11 +585,13 @@ function parseCSV(text) {
     var get = function (k) { return ci[k] >= 0 ? c[ci[k]] : 0; };
     var tv = ci.t >= 0 ? c[ci.t] : (i - 1) * 0.1;
     var vals = [tv, get("roll"), get("pitch"), get("yaw")];
+    if (aim) { var a = [c[ci.qw], c[ci.qx], c[ci.qy], c[ci.qz]].every(isFinite) ? aim(c[ci.qw], c[ci.qx], c[ci.qy], c[ci.qz]) : null; vals = a ? [tv, a.roll, a.pitch, a.yaw] : [NaN]; }
     if (vals.some(function (v) { return !isFinite(v); })) { d.dropped++; continue; }
     d.t.push(tv); d.roll.push(vals[1]); d.pitch.push(vals[2]); d.yaw.push(vals[3]);
     if (d.pan) d.pan.push(get("pan")); if (d.tilt) d.tilt.push(get("tilt"));
     if (d.kfy) d.kfy.push(get("kfy")); if (d.kfp) d.kfp.push(get("kfp"));
   }
+  d.fromQuat = !!aim;
   d.fcode = ci.fc >= 0 ? parseFloat(lines[1].split(delim)[ci.fc]) || 0 : 0;   // which firmware filter made the file
   var isMs = ci.t >= 0 && (/ms|millis/.test(head[ci.t]) || (d.t.length > 2 && (d.t[d.t.length - 1] - d.t[0]) / (d.t.length - 1) > 5));
   if (isMs) d.t = d.t.map(function (v) { return v / 1000; });
@@ -981,7 +1004,7 @@ function render() {
     (pk >= 0 ? " · strongest shake above 0.5 Hz: <b>" + fmt(sr.f[pk], 2) + " Hz</b>" : "") + ".";
   // status
   $("#status").innerHTML = "<b>" + esc(SOURCE) + "</b> · " + d.t.length + " readings · " + fmt(d.t[d.t.length - 1] - d.t[0], 1) + " s" +
-    (d.dropped ? " · " + d.dropped + " unreadable row(s) skipped" : "") + (d.noTime ? " · no time column, assumed 10 Hz" : "") +
+    (d.dropped ? " · " + d.dropped + " unreadable row(s) skipped" : "") + (d.noTime ? " · no time column, assumed 10 Hz" : "") + (d.fromQuat ? " · camera angles from the quaternion" : "") +
     (bm ? " · recorded with the " + MSHORT[bm] + " firmware" : "");
 }
 
@@ -1087,18 +1110,29 @@ Stage.prototype.faces = function (list) {
 
 // Pitch always tips the phone about the left-right axis (forward/back) and roll about the front axis,
 // whichever way the phone is held; "held" only changes which way its long side lies.
+// The model is built in the phone's own axes: x = short side, y = long side (top), z = out of the screen.
+// "camera": held sideways like a camera — long side left-right, screen facing you, back camera facing front.
+//           CAM_BASE turns the flat model into that pose (x → up, y → left, z → toward you).
+// Then the angles act like on a camera: Yaw turns about the vertical, Pitch nods about the left-right axis
+// (positive = looks up, like Tilt above 90°), Roll tips about the front axis. "flat" skips CAM_BASE.
+var CAM_BASE = [[0, -1, 0], [0, 0, -1], [1, 0, 0]];
 function drawPhone(st, P, K) {
   if (!st.begin()) return;
-  var gz = -1.15, M = mmul(rotZ(P.yaw * D2R), mmul(rotX(P.pitch * D2R), rotY(P.roll * D2R)));
-  var L = HOLD === "landscape", xy = function (a) { return L ? [-a[1], a[0], a[2]] : a; };   // landscape: long side left-right, top edge on the left
-  var part = function (a, b, col) { var p = xy(a), q = xy(b); return box([Math.min(p[0], q[0]), Math.min(p[1], q[1]), a[2]], [Math.max(p[0], q[0]), Math.max(p[1], q[1]), b[2]], col, M); };
+  var cam = HOLD === "camera", gz = -1.15;
+  var M = mmul(rotZ(P.yaw * D2R), mmul(rotX(P.pitch * D2R), rotY(P.roll * D2R)));
+  if (cam) M = mmul(M, CAM_BASE);
+  var part = function (a, b, col) { return box(a, b, col, M); };
   st.grid(gz, 1.5);
   var body = part([-.46, -.95, -.05], [.46, .95, .05], K.body);
   st.shadow(body, gz);
+  if (cam) {                                                     // where the phone's back camera looks
+    var dir = mvec(M, [0, 0, -1]);
+    st.line([[dir[0] * .1, dir[1] * .1, dir[2] * .1], [dir[0] * 2.2, dir[1] * 2.2, dir[2] * 2.2]], css("--s1"), 2);
+  }
   st.faces(body);
   // Parts sit on the body's surface, so they are drawn after it, and only on the side the camera can see
   if (st.facing(body[1])) st.faces(part([-.41, -.87, .05], [.41, .87, .062], K.screen).concat(part([-.12, .79, .062], [.12, .84, .07], K.body)));  // screen + earpiece (top edge)
-  else st.faces(part([-.4, .5, -.085], [-.08, .86, -.05], K.cam));                                                                                 // camera bump on the back
+  else st.faces(part([.08, .5, -.085], [.4, .86, -.05], K.cam));                                                                                   // camera bump, top-left seen from the back
 }
 function drawRig(st, P, K, M) {
   if (!st.begin()) return;
@@ -1141,10 +1175,7 @@ function poseAt(t) {
 
 var ANIM = { t: null, playing: false, touched: false, last: 0, chartAt: 0, visible: true, seeking: false, disp: null, sig: "" };
 var ST = { phone: new Stage("#cvPhone", { az: 0.28, el: 0.62, cz: -0.3, k: 0.36 }), rig: new Stage("#cvRig", { az: 0.28, el: 0.32, cz: 0.95, k: 0.3 }) };
-var HOLD = "portrait";
-try { HOLD = localStorage.getItem("ptl-hold") || HOLD; } catch (e) {}
-$("#aHold").value = HOLD;
-$("#aHold").addEventListener("change", function () { HOLD = this.value; ANIM.sig = ""; try { localStorage.setItem("ptl-hold", HOLD); } catch (e) {} });
+var HOLD = "camera";
 function setPlaying(on) { ANIM.playing = on; if (on) ANIM.touched = true; $("#aPlay").textContent = on ? "⏸ Pause" : "▶ Play"; }
 $("#aPlay").addEventListener("click", function () { setPlaying(!ANIM.playing); });
 $("#aSeek").addEventListener("pointerdown", function () { ANIM.seeking = true; });
@@ -1203,7 +1234,7 @@ function useData(raw, source) {
   if (LIVE.on) liveStop();
   try {
     var d = prep(raw); if (d.t.length < 10) throw new Error("Need at least 10 valid rows.");
-    d.noTime = raw.noTime; DATA = d; SOURCE = source; VIEW = null; ANIM.t = null;
+    d.noTime = raw.noTime; d.fromQuat = raw.fromQuat; DATA = d; SOURCE = source; VIEW = null; ANIM.t = null;
     if (boardMethod()) setMethod(boardMethod());                // show the filter the board was running
     run();
   } catch (e) { $("#status").innerHTML = "<b>Could not use " + esc(source) + ":</b> " + esc(e.message); }
